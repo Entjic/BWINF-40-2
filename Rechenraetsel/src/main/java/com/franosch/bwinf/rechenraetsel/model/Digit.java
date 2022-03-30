@@ -6,6 +6,7 @@ import lombok.Getter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Getter
 public enum Digit {
     ONE(1),
     TWO(2),
@@ -15,36 +16,37 @@ public enum Digit {
     SIX(6),
     SEVEN(7),
     EIGHT(8),
-    NINE(9);
+    NINE(9),
+    INVALID(-1);
 
-    @Getter
+    private static final Digit[] values = new Digit[]{ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE};
     private final int asInt;
 
-     Digit(int asInt){
+    Digit(int asInt) {
         this.asInt = asInt;
     }
 
-    public static Digit getRandom(){
-         return getRandomInRange(1, 10);
+    public static Digit getRandom() {
+        return getRandomInRange(1, 10);
     }
 
-    public static Digit getFromInt(int i){
-         return Arrays.stream(Digit.values()).filter(digit -> digit.asInt == i).findAny().get();
+    public static Digit getFromInt(int i) {
+        return Arrays.stream(Digit.values).filter(digit -> digit.asInt == i).findAny().get();
     }
 
-    public static Digit getRandomInRange(int from, int to){
+    public static Digit getRandomInRange(int from, int to) {
         int i = new Random().nextInt(from, to);
-        return Arrays.stream(Digit.values()).filter(digit -> digit.asInt == i).findAny().get();
+        return Arrays.stream(Digit.values).filter(digit -> digit.asInt == i).findAny().get();
     }
 
-    public static Digit getRandomExcept(Integer... integers){
+    public static Digit getRandomExcept(Integer... integers) {
         Set<Digit> digits = Arrays.stream(integers).map(Digit::getFromInt).collect(Collectors.toSet());
         return getRandomExcept(digits);
     }
 
-    public static Digit getRandomExcept(Collection<Digit> digits){
-        List<Digit> list = Arrays.stream(Digit.values()).filter(digit -> !digits.contains(digit)).toList();
-        int i = new Random().nextInt(1, list.size());
+    public static Digit getRandomExcept(Collection<Digit> digits) {
+        List<Digit> list = Arrays.stream(Digit.values).filter(digit -> !digits.contains(digit)).toList();
+        int i = new Random().nextInt(0, list.size());
         return list.get(i);
     }
 
