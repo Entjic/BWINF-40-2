@@ -8,7 +8,7 @@ public record Part(Operation operation,
     public String toString() {
         return "Part{" +
                 "operation=" + operation +
-                ", digit=" + digit +
+                ", digit=" + digit.toString() +
                 '}';
     }
 }

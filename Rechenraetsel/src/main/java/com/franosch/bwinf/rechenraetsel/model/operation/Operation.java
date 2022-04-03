@@ -23,7 +23,21 @@ public enum Operation {
     }
 
     public int apply(int a, int b) {
-        return operation.apply(a, b);
+        return operation.apply(a, b, true);
+    }
+
+    public int apply(int a, int b, boolean errorIfRuleBroken) {
+        return operation.apply(a, b, errorIfRuleBroken);
+    }
+
+    public static Operation get(String s) {
+        return switch (s) {
+            case "+" -> Operation.ADDITION;
+            case "-" -> Operation.SUBTRACTION;
+            case "*" -> Operation.MULTIPLICATION;
+            case ":" -> Operation.DIVISION;
+            default -> Operation.NONE;
+        };
     }
 
     public static Operation getRandom() {
@@ -38,7 +52,7 @@ public enum Operation {
 
 
     public static Operation getRandomExcept(Collection<Operation> operations) {
-        List<Operation> list = new ArrayList<>(List.of(ADDITION, SUBTRACTION, MULTIPLICATION, DIVISION));
+        List<Operation> list = new ArrayList<>(List.of(ADDITION, ADDITION, ADDITION, SUBTRACTION, MULTIPLICATION, DIVISION, MULTIPLICATION, MULTIPLICATION));
         list.removeAll(operations);
         int i = new Random().nextInt(0, list.size());
         return list.get(i);

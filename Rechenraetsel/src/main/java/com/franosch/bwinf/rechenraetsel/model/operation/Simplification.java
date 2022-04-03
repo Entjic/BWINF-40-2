@@ -1,4 +1,4 @@
 package com.franosch.bwinf.rechenraetsel.model.operation;
 
-public record Simplification(Operation operation, int value) {
+public record Simplification(Operation operation, double value) {
 }

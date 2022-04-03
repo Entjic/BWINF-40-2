@@ -2,6 +2,7 @@ package com.franosch.bwinf.rechenraetsel.model;
 
 
 import lombok.Getter;
+import org.w3c.dom.ls.LSOutput;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -19,7 +20,8 @@ public enum Digit {
     NINE(9),
     INVALID(-1);
 
-    private static final Digit[] values = new Digit[]{ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE};
+    @Getter
+    private static final Digit[] values = new Digit[]{TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE};
     private final int asInt;
 
     Digit(int asInt) {
@@ -27,7 +29,7 @@ public enum Digit {
     }
 
     public static Digit getRandom() {
-        return getRandomInRange(1, 10);
+        return getRandomInRange(2, 10);
     }
 
     public static Digit getFromInt(int i) {
@@ -46,8 +48,15 @@ public enum Digit {
 
     public static Digit getRandomExcept(Collection<Digit> digits) {
         List<Digit> list = Arrays.stream(Digit.values).filter(digit -> !digits.contains(digit)).toList();
+        if(list.size() == 0) return Digit.INVALID;
         int i = new Random().nextInt(0, list.size());
         return list.get(i);
     }
 
+    @Override
+    public String toString() {
+        return "Digit{" +
+                "int=" + asInt +
+                '}';
+    }
 }

@@ -1,17 +1,25 @@
 package com.franosch.bwinf.rechenraetsel;
 
+import com.franosch.bwinf.rechenraetsel.equationcheck.EquationChecker;
 import com.franosch.bwinf.rechenraetsel.model.Digit;
 import com.franosch.bwinf.rechenraetsel.model.Part;
 import com.franosch.bwinf.rechenraetsel.model.Riddle;
+import com.franosch.bwinf.rechenraetsel.model.Triple;
 import com.franosch.bwinf.rechenraetsel.model.operation.Operation;
 import com.franosch.bwinf.rechenraetsel.model.operation.Simplification;
-import lombok.RequiredArgsConstructor;
 
 import java.util.*;
 
-@RequiredArgsConstructor
 public class Generator {
     private final int length;
+    private final EquationChecker equationChecker;
+    private final RandomPartGenerator randomPartGenerator;
+
+    public Generator(int length) {
+        this.length = length;
+        this.equationChecker = new EquationChecker();
+        this.randomPartGenerator = new RandomPartGenerator();
+    }
 
     public Riddle generate() {
         Part[] parts = new Part[length];
@@ -23,25 +31,22 @@ public class Generator {
             }
             parts[i] = getSuitingPart(parts, i);
         }
-        return new Riddle(parts, apply(parts));
+        Riddle riddle = new Riddle(parts, apply(parts));
+        // System.out.println(riddle);
+        return riddle;
     }
 
     private Part getSuitingPart(Part[] parts, int position) {
-        Map<Digit, Set<Operation>> map = new HashMap<>();
-        for (Digit value : Digit.values()) {
-            map.put(value, new HashSet<>());
+        Set<Part> used = new HashSet<>();
+        Part part;
+        while (true) {
+            part = randomPartGenerator.generate(used);
+            System.out.println(Arrays.toString(parts));
+            System.out.println("trying part " + part);
+            if (isValidPart(parts, part, position)) break;
+            used.add(part);
         }
-        Digit digit = Digit.getRandom();
-        Operation operation = Operation.getRandom();
-        Part part = new Part(operation, digit);
-
-        while (!isValidPart(parts, part, position)) {
-            map.get(digit).add(operation);
-            part = getNextPart(map);
-            // System.out.println(Arrays.toString(parts));
-            // System.out.println("trying part " + part);
-        }
-
+        // System.out.println("valid part " + part);
         return part;
     }
 
@@ -50,7 +55,10 @@ public class Generator {
         // System.out.println("part " + part);
         Part[] copy = Arrays.copyOf(parts, parts.length);
         copy[position] = part;
-        if (Arrays.stream(copy).filter(Objects::nonNull).count() == 1) return true;
+        if (Arrays.stream(copy).filter(Objects::nonNull).count() == 1) {
+            // System.out.println(Arrays.toString(copy));
+            return true;
+        }
         try {
             // System.out.println("testing: " + Arrays.toString(copy));
             int i = apply(copy);
@@ -70,6 +78,9 @@ public class Generator {
             }
         }
         Part previous = parts[position - 1];
+
+        if (previous.digit().getAsInt() % part.digit().getAsInt() == 0 && previous.digit().getAsInt() / 2 == part.digit().getAsInt())
+            return false;
         if (previous.digit().equals(part.digit())) {
             if (operation.equals(Operation.ADDITION) || operation.equals(Operation.SUBTRACTION)) return false;
             if (previous.digit().equals(Digit.TWO)) return false;
@@ -78,38 +89,68 @@ public class Generator {
             if (previous.operation().equals(Operation.MULTIPLICATION) && operation.equals(Operation.DIVISION))
                 return false;
         }
-        if (previous.digit().equals(Digit.FOUR)) {
-            if (part.digit().equals(Digit.TWO)) return false;
-        }
-        if (!passesAdvancedChecks(copy)) {
+        if (!passesCompleteReducedTests(copy)) {
             // System.out.println("failed advanced checks");
             return false;
         }
+
+        if (!passesPartlyReducedTests(copy)) {
+            return false;
+        }
+        // System.out.println("seemingly valid " + part);
         return true;
     }
 
-    private boolean passesAdvancedChecks(Part[] parts) {
-        Simplification[] simplifications = reduce(parts);
-        List<Part> nonNull = Arrays.stream(parts).filter(Objects::nonNull).toList();
-        if (!passesSameSubSumCheck(simplifications)) return false;
-        if (parts.length < 3) return true;
+    private boolean passesPartlyReducedTests(Part[] parts) {
+        Triple[] triples = reduceMinusOne(parts);
+        // System.out.println("reduced " + Arrays.toString(simplifications));
+        return checkSimplified(triples);
+    }
+
+    private boolean passesCompleteReducedTests(Part[] parts) {
+        Simplification[] simplifications = reduce(parts, true);
+        // System.out.println("non null " + nonNull);
+        if (!passesSameSubSumCheck(simplifications)) {
+            System.out.println("failed due to sub sum");
+            return false;
+        }
+        if (simplifications.length < 3) return true;
         //System.out.println(nonNull);
-        for (int i = 1; i < nonNull.size() - 1; i++) {
-            Part previous = nonNull.get(i - 1);
-            Part current = nonNull.get(i);
-            Part next = nonNull.get(i + 1);
-            if (previous.digit().equals(next.digit())) {
-                // System.out.println(previous);
-                //System.out.println(current);
-                //System.out.println(next);
-                if (current.operation().equals(Operation.MULTIPLICATION) ||
-                        current.operation().equals(Operation.DIVISION)) return false;
-            }
+
+        if (Arrays.stream(simplifications).anyMatch(simplification -> simplification.value() == 1)) return false;
+        // System.out.println(nonNull.size());
+        Triple[] triples = new Triple[simplifications.length - 2];
+        for (int i = 0; i < simplifications.length - 2; i++) {
+            triples[i] = new Triple(simplifications[i], simplifications[i + 1], simplifications[i + 2]);
+        }
+        return checkSimplified(triples);
+    }
+
+    private boolean checkSimplified(Triple[] triples) {
+        for (Triple triple : triples) {
+            Simplification left = triple.previous();
+            Simplification mid = triple.current();
+            Simplification right = triple.next();
+            if (isABA(left, mid, right)) return false; // vermutlich unnötig
+            if (equationChecker.satisfiesEquation(left, mid, right)) return false;
         }
         return true;
     }
 
+    private boolean isABA(Simplification a, Simplification b, Simplification c) {
+        if (a.value() == c.value()) {
+            System.out.println(a);
+            System.out.println(b);
+            System.out.println(c);
+            if (b.operation().equals(Operation.MULTIPLICATION) || b.operation().equals(Operation.DIVISION)) return true;
+            if (c.operation().equals(Operation.MULTIPLICATION) || c.operation().equals(Operation.DIVISION)) return true;
+        }
+        return false;
+    }
+
+
     private boolean passesSameSubSumCheck(Simplification[] simplifications) {
+        // System.out.println("simplification" + Arrays.toString(simplifications));
         Set<Simplification[]> combinations = new HashSet<>();
         if (simplifications.length < 2) return true;
         combinations.add(new Simplification[]{simplifications[0]});
@@ -129,7 +170,9 @@ public class Generator {
             for (Simplification[] inner : copy) {
                 int appliedA = apply(combination);
                 int appliedB = apply(inner);
-                if (appliedA == appliedB) {
+                if (appliedA * -1 == appliedB) {
+                    // System.out.println("a" + Arrays.toString(combination) + " -> " + appliedA);
+                    // System.out.println("b" + Arrays.toString(inner) + " -> " + appliedB);
                     // System.out.println("failed same sub sum test");
                     return false;
                 }
@@ -138,38 +181,13 @@ public class Generator {
         return true;
     }
 
-    private Part getNextPart(Map<Digit, Set<Operation>> map) {
-        Set<Digit> digits = new HashSet<>();
-        Digit digit = Digit.getRandom();
-        // System.out.println("random digit" + digit);
-        Operation operation = getNextOperation(map.get(digit));
-        while (operation.equals(Operation.INVALID)) {
-            digits.add(digit);
-            digit = getNextDigit(digits);
-            if (digit.equals(Digit.INVALID)) throw new ArithmeticException("no possible number left");
-            operation = getNextOperation(map.get(digit));
-        }
-        // System.out.println("next operation " + operation + " digit " + digit);
-        return new Part(operation, digit);
-    }
-
-    private Digit getNextDigit(Set<Digit> digits) {
-        if (digits.size() == 9) return Digit.INVALID;
-        return Digit.getRandomExcept(digits);
-    }
-
-    private Operation getNextOperation(Set<Operation> operations) {
-        if (operations.size() == 4) return Operation.INVALID;
-        return Operation.getRandomExcept(operations);
-    }
-
     private int apply(Part[] parts) {
         // System.out.println("parts: " + Arrays.toString(parts));
-        Simplification[] out = reduce(parts);
+        Simplification[] out = reduce(parts, true);
         // System.out.println("out: " + out);
         int applied = 0;
         for (Simplification simplification : out) {
-            applied = simplification.operation().apply(applied, simplification.value());
+            applied = simplification.operation().apply(applied, (int) simplification.value());
         }
         // System.out.println("applied " + applied);
         return applied;
@@ -178,13 +196,51 @@ public class Generator {
     private int apply(Simplification[] simplifications) {
         int applied = 0;
         for (Simplification simplification : simplifications) {
-            applied = simplification.operation().apply(applied, simplification.value());
+            applied = simplification.operation().apply(applied, (int) simplification.value());
         }
         // System.out.println("applied " + applied);
         return applied;
     }
 
-    private Simplification[] reduce(Part[] parts) {
+    private Triple[] reduceMinusOne(Part[] parts) {
+        Part[] nonNull = Arrays.stream(parts).filter(Objects::nonNull).toArray(Part[]::new);
+        if (nonNull.length < 3) return new Triple[0];
+        List<Triple> output = new ArrayList<>();
+        for (int i = 0; i < nonNull.length - 2; i++) {
+            System.out.println(Arrays.toString(nonNull));
+            Simplification left = reduceLeft(nonNull, i);
+            Part current = nonNull[i + 1];
+            Simplification mid = new Simplification(current.operation(), current.digit().getAsInt());
+            Simplification right = reduceRight(nonNull, i + 2);
+            Triple triple = new Triple(left, mid, right);
+            System.out.println("generated triple " + triple);
+            output.add(triple);
+        }
+        return output.toArray(new Triple[0]);
+    }
+
+    private Simplification reduceRight(Part[] parts, int right) {
+        if (right == parts.length - 1) {
+            Part currentPart = parts[parts.length - 1];
+            return new Simplification(currentPart.operation(), currentPart.digit().getAsInt());
+        }
+        Part[] rightSlice = Arrays.copyOfRange(parts, right, parts.length);
+        System.out.println("right slice " + Arrays.toString(rightSlice));
+        Simplification[] reduced = reduce(rightSlice, false);
+        return reduced[0];
+    }
+
+    private Simplification reduceLeft(Part[] parts, int left) {
+        if (left == 0) {
+            Part currentPart = parts[0];
+            return new Simplification(currentPart.operation(), currentPart.digit().getAsInt());
+        }
+        Part[] leftSlice = Arrays.copyOfRange(parts, 0, left + 1);
+        Simplification[] reduced = reduce(leftSlice, false);
+        return reduced[reduced.length - 1];
+    }
+
+    private Simplification[] reduce(Part[] parts, boolean errorIfRuleBroken) {
         Stack<Simplification> simplifications = new Stack<>();
         for (int i = parts.length - 1; i >= 0; i--) {
             Part part = parts[i];
@@ -204,7 +260,7 @@ public class Generator {
             // System.out.println("next " + next);
             if (next.operation().equals(Operation.MULTIPLICATION) || next.operation().equals(Operation.DIVISION)) {
                 simplifications.pop();
-                Simplification result = new Simplification(simplification.operation(), next.operation().apply(simplification.value(), next.value()));
+                Simplification result = new Simplification(simplification.operation(), next.operation().apply((int) simplification.value(), (int) next.value(), errorIfRuleBroken));
                 // System.out.println("adding " + result);
                 simplifications.add(result);
                 continue;

@@ -81,7 +81,7 @@ public class Solver {
             // System.out.println("next " + next);
             if (next.operation().equals(Operation.MULTIPLICATION) || next.operation().equals(Operation.DIVISION)) {
                 simplifications.pop();
-                Simplification result = new Simplification(simplification.operation(), next.operation().apply(simplification.value(), next.value()));
+                Simplification result = new Simplification(simplification.operation(), next.operation().apply((int) simplification.value(), (int) next.value()));
                 // System.out.println("adding " + result);
                 simplifications.add(result);
                 continue;
@@ -91,7 +91,7 @@ public class Solver {
         // System.out.println("out: " + out);
         int applied = 0;
         for (Simplification simplification : out) {
-            applied = simplification.operation().apply(applied, simplification.value());
+            applied = simplification.operation().apply(applied, (int) simplification.value());
         }
         // System.out.println("applied " + applied);
         return applied;
