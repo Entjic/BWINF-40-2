@@ -32,7 +32,7 @@ public class Main {
         for (List<Operation> operation : operations) {
             System.out.println(operation);
         }*/
-        test(4, 10000);
+        test(4, 1000);
     }
 
     private static void test(int length, int amount) {

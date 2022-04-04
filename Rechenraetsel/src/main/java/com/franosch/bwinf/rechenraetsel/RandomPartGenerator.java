@@ -4,8 +4,7 @@ import com.franosch.bwinf.rechenraetsel.model.Digit;
 import com.franosch.bwinf.rechenraetsel.model.Part;
 import com.franosch.bwinf.rechenraetsel.model.operation.Operation;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class RandomPartGenerator {
     private final Set<Part> parts;
@@ -27,10 +26,12 @@ public class RandomPartGenerator {
     }
 
     public Part generate(Set<Part> except) {
-        Set<Part> open = new HashSet<>(parts);
+        List<Part> open = new ArrayList<>(parts);
         open.removeAll(except);
         if (open.size() == 0) throw new ArithmeticException("no more parts");
-        return open.stream().findAny().get();
+        Part part = open.get(new Random().nextInt(0, open.size()));
+        // System.out.println("trying " + part);
+        return part;
     }
 
 }

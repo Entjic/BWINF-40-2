@@ -35,7 +35,7 @@ public enum Operation {
             case "+" -> Operation.ADDITION;
             case "-" -> Operation.SUBTRACTION;
             case "*" -> Operation.MULTIPLICATION;
-            case ":" -> Operation.DIVISION;
+            case ":", "/" -> Operation.DIVISION;
             default -> Operation.NONE;
         };
     }
