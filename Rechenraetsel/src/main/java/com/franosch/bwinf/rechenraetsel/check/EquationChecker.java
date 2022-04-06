@@ -1,4 +1,4 @@
-package com.franosch.bwinf.rechenraetsel.equationcheck;
+package com.franosch.bwinf.rechenraetsel.check;
 
 import com.franosch.bwinf.rechenraetsel.io.FileReader;
 import com.franosch.bwinf.rechenraetsel.model.check.Equation;
@@ -7,30 +7,32 @@ import com.franosch.bwinf.rechenraetsel.model.check.Variable;
 import com.franosch.bwinf.rechenraetsel.model.operation.Operation;
 import com.franosch.bwinf.rechenraetsel.model.operation.Simplification;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class EquationChecker {
-    private final List<Equation> equations;
+    private final Map<Integer, List<Equation>> equationMap;
 
     public EquationChecker() {
         final FileReader fileReader = new FileReader("equations", "/rechenraetsel/src/main/resources/");
         List<String> equationStrings = fileReader.getContent();
-        equations = parseEquations(equationStrings);
-        System.out.println(equations);
+        equationMap = new HashMap<>();
+        initEquations(equationStrings);
+        // System.out.println(equations);
     }
 
-    private List<Equation> parseEquations(List<String> equationStrings) {
-        final List<Equation> output = new ArrayList<>();
+    private void initEquations(List<String> equationStrings) {
         for (String equationString : equationStrings) {
             String left = equationString.split("[=]")[0];
             String right = equationString.split("[=]")[1];
             Equation equation = new Equation(parseExpression(left), parseExpression(right), left + "=" + right);
-            output.add(equation);
+            put(equation);
         }
-        return output;
+    }
+
+    private void put(Equation equation) {
+        int length = equation.left().variables().length;
+        List<Equation> equations = equationMap.computeIfAbsent(length, k -> new ArrayList<>());
+        equations.add(equation);
     }
 
     private Expression parseExpression(String expressionString) {
@@ -48,14 +50,31 @@ public class EquationChecker {
         return new Expression(variables.toArray(new Variable[0]));
     }
 
-    public boolean satisfiesEquation(Simplification a, Simplification b, Simplification c) {
-        for (Equation equation : equations) {
-            if (equation.satisfies(a, b, c)) {
+    public boolean satisfiesEquation(Simplification... simplifications) {
+        int[] integers = Arrays.stream(simplifications).mapToInt(value -> (int) value.value()).toArray();
+        return satisfiesEquation(integers);
+    }
+
+
+    public boolean satisfiesEquation(int[] ints) {
+        if (!equationMap.containsKey(ints.length)) return false;
+        for (Equation equation : equationMap.get(ints.length)) {
+            if (equation.satisfies(ints)) {
                 // System.out.println(equation);
                 return true;
             }
         }
+        return false;
+    }
 
+    public boolean satisfiesEquation(int[] ints, int result) {
+        if (!equationMap.containsKey(ints.length)) return false;
+        for (Equation equation : equationMap.get(ints.length)) {
+            if (equation.satisfies(ints, result)) {
+                // System.out.println(equation);
+                return true;
+            }
+        }
         return false;
     }
 

@@ -5,9 +5,18 @@ import com.franosch.bwinf.rechenraetsel.model.Riddle;
 import com.franosch.bwinf.rechenraetsel.model.operation.Operation;
 import com.franosch.bwinf.rechenraetsel.model.operation.Simplification;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class Solver {
+
+    private final Calculator calculator;
+
+    public Solver() {
+        calculator = new Calculator();
+    }
 
     public Set<List<Operation>> solve(Riddle riddle) {
         int outcome = riddle.outcome();
@@ -23,7 +32,7 @@ public class Solver {
             for (int i = 0; i < sol.length; i++) {
                 sol[i] = new Part(operations.get(i), parts[i].digit());
             }
-            int applied = apply(sol);
+            double applied = apply(sol);
             if (applied == outcome) {
                 // System.out.println("valid" + Arrays.toString(sol));
                 results.add(operations);
@@ -60,41 +69,14 @@ public class Solver {
     }
 
 
-    private int apply(Part[] parts) {
+    private double apply(Part[] parts) {
         // System.out.println("parts: " + Arrays.toString(parts));
-        Stack<Simplification> simplifications = new Stack<>();
-        for (int i = parts.length - 1; i >= 0; i--) {
-            Part part = parts[i];
+        List<Simplification> simplifications = new ArrayList<>();
+        for (Part part : parts) {
             if (part == null) continue;
-            simplifications.push(new Simplification(part.operation(), part.digit().getAsInt()));
+            simplifications.add(new Simplification(part.operation(), part.digit().getAsInt()));
         }
-        List<Simplification> out = new ArrayList<>();
-        // System.out.println(simplifications);
-        while (!simplifications.empty()) {
-            Simplification simplification = simplifications.pop();
-            if (simplifications.isEmpty()) {
-                out.add(simplification);
-                break;
-            }
-            Simplification next = simplifications.peek();
-            // System.out.println("current " + simplification);
-            // System.out.println("next " + next);
-            if (next.operation().equals(Operation.MULTIPLICATION) || next.operation().equals(Operation.DIVISION)) {
-                simplifications.pop();
-                Simplification result = new Simplification(simplification.operation(), next.operation().apply((int) simplification.value(), (int) next.value()));
-                // System.out.println("adding " + result);
-                simplifications.add(result);
-                continue;
-            }
-            out.add(simplification);
-        }
-        // System.out.println("out: " + out);
-        int applied = 0;
-        for (Simplification simplification : out) {
-            applied = simplification.operation().apply(applied, (int) simplification.value());
-        }
-        // System.out.println("applied " + applied);
-        return applied;
+        return calculator.calculate(simplifications.toArray(new Simplification[0]));
     }
 
 }

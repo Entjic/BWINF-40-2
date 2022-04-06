@@ -1,7 +1,7 @@
 package com.franosch.bwinf.rechenraetsel;
 
-import com.franosch.bwinf.rechenraetsel.blacklist.BlacklistChecker;
-import com.franosch.bwinf.rechenraetsel.equationcheck.EquationChecker;
+import com.franosch.bwinf.rechenraetsel.check.BlacklistChecker;
+import com.franosch.bwinf.rechenraetsel.check.EquationChecker;
 import com.franosch.bwinf.rechenraetsel.model.Digit;
 import com.franosch.bwinf.rechenraetsel.model.Part;
 import com.franosch.bwinf.rechenraetsel.model.Riddle;
@@ -42,6 +42,7 @@ public class Generator {
     private Part getSuitingPart(Part[] parts, int position) {
         Set<Part> used = new HashSet<>();
         Part part;
+        // System.out.println(Arrays.toString(parts));
         while (true) {
             if (used.size() == 32) {
                 // System.out.println(Arrays.toString(parts));
@@ -63,7 +64,6 @@ public class Generator {
         copy[position] = part;
         long length = Arrays.stream(copy).filter(Objects::nonNull).count();
         if (length == 1) {
-            System.out.println(Arrays.toString(copy));
             return true;
         }
         try {
@@ -78,8 +78,8 @@ public class Generator {
             return false;
         }
         Operation operation = part.operation();
+        int applied = apply(copy);
         if (part.digit().equals(Digit.ONE)) {
-            int applied = apply(copy);
             if (applied != 0) {
                 if (operation.equals(Operation.DIVISION) || operation.equals(Operation.MULTIPLICATION)) return false;
             }
@@ -97,25 +97,35 @@ public class Generator {
                 return false;
         }
         if (length == 2) {
-            int applied = copy[1].operation().apply(copy[0].digit().getAsInt(), copy[1].digit().getAsInt(), true);
-            if (applied == 1) return false;
+            int a = copy[1].operation().apply(copy[0].digit().getAsInt(), copy[1].digit().getAsInt(), true);
+            if (a == 1) return false;
+        }
+        int[] ints = Arrays.stream(copy).filter(Objects::nonNull).mapToInt(value -> value.digit().getAsInt()).toArray();
+        if (ints.length == this.length) {
+            if (equationChecker.satisfiesEquation(ints, applied)) {
+                // System.out.println("failed naive final equation check");
+                return false;
+            }
+        }else {
+            if(equationChecker.satisfiesEquation(ints)){
+               // System.out.println("failed naive equation check");
+            }
         }
 
         if (!passesCompleteReducedTests(copy)) {
-            // System.out.println("failed advanced checks");
+            // System.out.println("failed completely reduced tests");
             return false;
         }
 
         if (!passesPartlyReducedTests(copy)) {
+            // System.out.println("failed partly reduced tests");
             return false;
         }
-        // System.out.println("seemingly valid " + part);
         return true;
     }
 
     private boolean passesPartlyReducedTests(Part[] parts) {
         Triple[] triples = reduceMinusOne(parts);
-        // System.out.println("reduced " + Arrays.toString(simplifications));
         return checkSimplified(triples);
     }
 
@@ -128,7 +138,8 @@ public class Generator {
         // System.out.println(nonNull.size());
         Triple[] triples = new Triple[simplifications.length - 2];
         for (int i = 0; i < simplifications.length - 2; i++) {
-            triples[i] = new Triple(simplifications[i], simplifications[i + 1], simplifications[i + 2]);
+            Triple triple = new Triple(simplifications[i], simplifications[i + 1], simplifications[i + 2]);
+            triples[i] = triple;
         }
         return checkSimplified(triples);
     }
@@ -140,27 +151,27 @@ public class Generator {
             Simplification mid = triple.current();
             Simplification right = triple.next();
             if (isABA(left, mid, right)) {
-           //     System.out.println("failed to aba");
+                // System.out.println("failed to aba");
                 return false;
             }
             if (isMultipleDivision(left, mid, right)) {
-     //           System.out.println("failed to multiple division");
+                // System.out.println("failed to multiple division");
                 return false;
             }
             if (isOneAtAnyMoment(left, mid, right)) {
-       //         System.out.println("failed to one at a moment");
+                // System.out.println("failed to one at a moment");
                 return false;
             }
             if (isSubSum(left, mid, right)) {
-            //    System.out.println("failed to sub sum");
+                // System.out.println("failed to sub sum");
                 return false;
             }
             if (equationChecker.satisfiesEquation(left, mid, right)) {
-        //        System.out.println("failed to equations");
+                // System.out.println("failed to equations");
                 return false;
             }
             if (blacklistChecker.matchesBlacklistedEntry(left, mid, right)) {
-          //      System.out.println("failed to blacklist");
+                // System.out.println("failed to blacklist");
                 return false;
             }
         }
@@ -259,6 +270,7 @@ public class Generator {
         Part[] nonNull = Arrays.stream(parts).filter(Objects::nonNull).toArray(Part[]::new);
         if (nonNull.length < 3) return new Triple[0];
         List<Triple> output = new ArrayList<>();
+        //   System.out.println(Arrays.toString(nonNull));
         for (int i = 0; i < nonNull.length - 2; i++) {
             //System.out.println(Arrays.toString(nonNull));
             Simplification left = reduceLeft(nonNull, i);
@@ -266,7 +278,7 @@ public class Generator {
             Simplification mid = new Simplification(current.operation(), current.digit().getAsInt());
             Simplification right = reduceRight(nonNull, i + 2);
             Triple triple = new Triple(left, mid, right);
-            //System.out.println("generated triple " + triple);
+            //        System.out.println("generated triple " + triple);
             output.add(triple);
         }
         return output.toArray(new Triple[0]);
@@ -278,7 +290,7 @@ public class Generator {
             return new Simplification(currentPart.operation(), currentPart.digit().getAsInt());
         }
         Part[] rightSlice = Arrays.copyOfRange(parts, right, parts.length);
-        //System.out.println("right slice " + Arrays.toString(rightSlice));
+        //  System.out.println("right slice " + Arrays.toString(rightSlice));
         Simplification[] reduced = reduce(rightSlice, false);
         return reduced[0];
     }
@@ -317,7 +329,12 @@ public class Generator {
             // System.out.println("next " + next);
             if (next.operation().equals(Operation.MULTIPLICATION) || next.operation().equals(Operation.DIVISION)) {
                 simplifications.pop();
-                Simplification result = new Simplification(simplification.operation(), next.operation().apply((int) simplification.value(), (int) next.value(), errorIfRuleBroken));
+                Simplification result;
+                if (simplification.operation().equals(Operation.DIVISION)) {
+                    result = new Simplification(simplification.operation(), Operation.MULTIPLICATION.apply((int) simplification.value(), (int) next.value(), errorIfRuleBroken));
+                } else {
+                    result = new Simplification(simplification.operation(), next.operation().apply((int) simplification.value(), (int) next.value(), errorIfRuleBroken));
+                }
                 // System.out.println("adding " + result);
                 simplifications.add(result);
                 continue;

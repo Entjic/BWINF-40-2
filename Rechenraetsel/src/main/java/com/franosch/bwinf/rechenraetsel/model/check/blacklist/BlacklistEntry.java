@@ -4,15 +4,19 @@ import com.franosch.bwinf.rechenraetsel.model.Digit;
 import com.franosch.bwinf.rechenraetsel.model.Part;
 import com.franosch.bwinf.rechenraetsel.model.operation.Operation;
 import com.franosch.bwinf.rechenraetsel.model.operation.Simplification;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class BlacklistEntry {
+    @Getter
+    private final int length;
     private final List<Part> parts;
 
     public BlacklistEntry(String input) {
         this.parts = parseInput(input);
+        this.length = parts.size();
     }
 
     public boolean satisfies(Simplification... simplifications) {
