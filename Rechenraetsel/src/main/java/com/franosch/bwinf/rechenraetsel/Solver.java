@@ -5,10 +5,7 @@ import com.franosch.bwinf.rechenraetsel.model.Riddle;
 import com.franosch.bwinf.rechenraetsel.model.operation.Operation;
 import com.franosch.bwinf.rechenraetsel.model.operation.Simplification;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class Solver {
 
@@ -46,7 +43,7 @@ public class Solver {
             return;
         }
         Part[] sol = new Part[iterationDepth + 1];
-        for (int i = 0; i < sol.length - 1; i++) {
+        for (int i = 0; i < iterationDepth; i++) {
             sol[i] = new Part(operations.get(i), parts[i].digit());
         }
         iterationDepth++;
@@ -57,10 +54,12 @@ public class Solver {
             // System.out.println(part);
             // System.out.println(iterationDepth);
             sol[iterationDepth - 1] = part;
-            try {
-                apply(sol);
-            } catch (ArithmeticException e) {
-                continue;
+            if (operation.equals(Operation.DIVISION)) {
+                try {
+                    apply(sol);
+                } catch (ArithmeticException e) {
+                    continue;
+                }
             }
             List<Operation> copy = new ArrayList<>(operations);
             copy.add(operation);
@@ -70,13 +69,7 @@ public class Solver {
 
 
     private double apply(Part[] parts) {
-        // System.out.println("parts: " + Arrays.toString(parts));
-        List<Simplification> simplifications = new ArrayList<>();
-        for (Part part : parts) {
-            if (part == null) continue;
-            simplifications.add(new Simplification(part.operation(), part.digit().getAsInt()));
-        }
-        return calculator.calculate(simplifications.toArray(new Simplification[0]));
+        return calculator.calculate(true, Arrays.stream(parts).map(Simplification::convert).toArray(Simplification[]::new));
     }
 
 }
