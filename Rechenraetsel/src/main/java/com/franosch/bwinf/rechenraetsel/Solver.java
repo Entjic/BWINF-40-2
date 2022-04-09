@@ -1,11 +1,14 @@
 package com.franosch.bwinf.rechenraetsel;
 
+import com.franosch.bwinf.rechenraetsel.model.Digit;
 import com.franosch.bwinf.rechenraetsel.model.Part;
 import com.franosch.bwinf.rechenraetsel.model.Riddle;
 import com.franosch.bwinf.rechenraetsel.model.operation.Operation;
 import com.franosch.bwinf.rechenraetsel.model.operation.Simplification;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Solver {
 
@@ -15,61 +18,52 @@ public class Solver {
         calculator = new Calculator();
     }
 
-    public Set<List<Operation>> solve(Riddle riddle) {
+    public Set<Operation[]> solve(Riddle riddle) {
         int outcome = riddle.outcome();
-        Set<List<Operation>> solutions = new HashSet<>();
-        solve(riddle.parts(), 0, outcome, new ArrayList<>(), solutions);
+        Set<Operation[]> solutions = new HashSet<>();
+        Operation[] operations = new Operation[riddle.parts().length];
+        operations[0] = Operation.ADDITION;
+        solve(Arrays.stream(riddle.parts()).map(Part::digit).toArray(Digit[]::new), 1,
+                outcome, operations, solutions);
         return solutions;
     }
 
-    private void solve(final Part[] parts, int iterationDepth, final int outcome, List<Operation> operations, final Set<List<Operation>> results) {
+    private void solve(final Digit[] digits, int iterationDepth, final int outcome, Operation[] operations, final Set<Operation[]> results) {
         // System.out.println(operations);
-        if (parts.length == iterationDepth) {
-            Part[] sol = new Part[operations.size()];
-            for (int i = 0; i < sol.length; i++) {
-                sol[i] = new Part(operations.get(i), parts[i].digit());
+        if (digits.length == iterationDepth) {
+            Simplification[] simplifications = new Simplification[iterationDepth];
+            for (int i = 0; i < simplifications.length; i++) {
+                simplifications[i] = new Simplification(operations[i], digits[i].getAsInt());
             }
-            double applied = apply(sol);
+            double applied = calculator.calculate(simplifications);
             if (applied == outcome) {
                 // System.out.println("valid" + Arrays.toString(sol));
                 results.add(operations);
             }
             return;
         }
-        if (iterationDepth == 0) {
-            operations.add(Operation.ADDITION);
-            iterationDepth++;
-            solve(parts, iterationDepth, outcome, operations, results);
-            return;
-        }
-        Part[] sol = new Part[iterationDepth + 1];
-        for (int i = 0; i < iterationDepth; i++) {
-            sol[i] = new Part(operations.get(i), parts[i].digit());
-        }
         iterationDepth++;
         // System.out.println(Arrays.toString(sol));
         // System.out.println("parts " + Arrays.toString(parts));
         for (Operation operation : Operation.getValues()) {
-            Part part = new Part(operation, parts[iterationDepth - 1].digit());
             // System.out.println(part);
             // System.out.println(iterationDepth);
-            sol[iterationDepth - 1] = part;
-            if (operation.equals(Operation.DIVISION)) {
+
+            Operation[] copy = operations.clone();
+            copy[iterationDepth - 1] = operation;
+            if (operation == Operation.DIVISION) {
                 try {
-                    apply(sol);
+                    Simplification[] simplifications = new Simplification[iterationDepth];
+                    for (int i = 0; i < simplifications.length; i++) {
+                        simplifications[i] = new Simplification(copy[i], digits[i].getAsInt());
+                    }
+                    calculator.calculate(true, simplifications);
                 } catch (ArithmeticException e) {
                     continue;
                 }
             }
-            List<Operation> copy = new ArrayList<>(operations);
-            copy.add(operation);
-            solve(parts, iterationDepth, outcome, copy, results);
+            solve(digits, iterationDepth, outcome, copy, results);
         }
-    }
-
-
-    private double apply(Part[] parts) {
-        return calculator.calculate(true, Arrays.stream(parts).map(Simplification::convert).toArray(Simplification[]::new));
     }
 
 }

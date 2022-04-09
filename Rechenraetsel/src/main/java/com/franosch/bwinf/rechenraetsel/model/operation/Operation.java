@@ -41,7 +41,7 @@ public enum Operation {
     }
 
     public static Operation getRandom() {
-        List<Operation> list = List.of(ADDITION, ADDITION, SUBTRACTION, DIVISION, MULTIPLICATION, MULTIPLICATION);
+        List<Operation> list = List.of(ADDITION, ADDITION, SUBTRACTION, DIVISION, DIVISION, MULTIPLICATION, MULTIPLICATION);
         int i = new Random().nextInt(0, list.size());
         return list.get(i);
     }
@@ -52,7 +52,7 @@ public enum Operation {
 
 
     public static Operation getRandomExcept(Collection<Operation> operations) {
-        List<Operation> list = new ArrayList<>(List.of(ADDITION, ADDITION, SUBTRACTION, DIVISION, MULTIPLICATION, MULTIPLICATION));
+        List<Operation> list = new ArrayList<>(List.of(ADDITION, ADDITION, SUBTRACTION, DIVISION, DIVISION, MULTIPLICATION, MULTIPLICATION));
         list.removeAll(operations);
         int i = new Random().nextInt(0, list.size());
         return list.get(i);

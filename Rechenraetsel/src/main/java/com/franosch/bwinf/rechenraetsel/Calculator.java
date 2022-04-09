@@ -24,7 +24,7 @@ public class Calculator {
     }
 
     public Simplification[] reduce(boolean throwOnError, Simplification... simplifications) {
-        if(simplifications.length == 0) return new Simplification[0];
+        if (simplifications.length == 0) return new Simplification[0];
         if (simplifications.length == 1) return new Simplification[]{simplifications[0]};
         Stack<Simplification> stack = new Stack<>();
         for (int i = simplifications.length - 1; i >= 0; i--) {
@@ -42,10 +42,10 @@ public class Calculator {
             Simplification next = stack.peek();
             // System.out.println("current " + stack);
             // System.out.println("next " + next);
-            if (next.operation().equals(Operation.MULTIPLICATION) || next.operation().equals(Operation.DIVISION)) {
+            if (next.operation() == Operation.MULTIPLICATION || next.operation() == Operation.DIVISION) {
                 stack.pop();
                 Simplification result;
-                if (simplification.operation().equals(Operation.DIVISION)) {
+                if (simplification.operation() == Operation.DIVISION) {
                     result = new Simplification(simplification.operation(), Operation.MULTIPLICATION.apply((int) simplification.value(), (int) next.value(), throwOnError));
                 } else {
                     result = new Simplification(simplification.operation(), next.operation().apply((int) simplification.value(), (int) next.value(), throwOnError));

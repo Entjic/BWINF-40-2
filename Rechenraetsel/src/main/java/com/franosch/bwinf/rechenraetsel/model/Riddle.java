@@ -13,7 +13,7 @@ public record Riddle(Part[] parts, int outcome) {
             if (!operation.equals(Operation.NONE)) return part;
             return new Part(Operation.ADDITION, part.digit());
         })).toArray(Part[]::new);
-        return new Riddle(combined, Arrays.stream(riddles).mapToInt(value -> value.outcome()).sum());
+        return new Riddle(combined, Arrays.stream(riddles).mapToInt(Riddle::outcome).sum());
     }
 
     @Override

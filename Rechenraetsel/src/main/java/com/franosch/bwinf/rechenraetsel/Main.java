@@ -1,9 +1,11 @@
 package com.franosch.bwinf.rechenraetsel;
 
+import com.franosch.bwinf.rechenraetsel.check.SubSumChecker;
 import com.franosch.bwinf.rechenraetsel.logging.LogFormatter;
 import com.franosch.bwinf.rechenraetsel.model.Part;
 import com.franosch.bwinf.rechenraetsel.model.Riddle;
 import com.franosch.bwinf.rechenraetsel.model.operation.Operation;
+import com.franosch.bwinf.rechenraetsel.model.operation.Simplification;
 import lombok.SneakyThrows;
 
 import java.io.FileWriter;
@@ -20,7 +22,8 @@ public class Main {
     public static void main(String[] args) {
         setUpLogger(Level.OFF);
         long sum = 0;
-        for (int i = 0; i < 1; i++) {
+        int amount = 10;
+        for (int i = 0; i < amount; i++) {
             long a = System.currentTimeMillis();
             Riddle riddle = createMaster(12);
             long b = System.currentTimeMillis();
@@ -29,13 +32,21 @@ public class Main {
             System.out.println("solution: " + riddle);
             sum += seconds;
         }
-        System.out.println("average time per riddle " + (double) TimeUnit.MILLISECONDS.toSeconds(sum) / 1 + "s");
+        System.out.println("average time per riddle " + (double) TimeUnit.MILLISECONDS.toSeconds(sum) / amount + "s");
 
     }
 
     private static boolean isValid(Riddle riddle) {
         Solver solver = new Solver();
+        SubSumChecker subSumChecker = new SubSumChecker();
+        Calculator calculator = new Calculator();
+        Simplification[] simplifications = calculator.reduce(false, convert(riddle.parts()));
+        if (subSumChecker.isSubSum(simplifications)) return false;
         return solver.solve(riddle).size() == 1;
+    }
+
+    private static Simplification[] convert(Part[] parts) {
+        return Arrays.stream(parts).filter(Objects::nonNull).map(Simplification::convert).toList().toArray(new Simplification[0]);
     }
 
     private static Riddle createMaster(int length) {
@@ -69,7 +80,7 @@ public class Main {
                 return create(3, 3, 5);
             }
             case 12 -> {
-                return create(4, 4, 4);
+                return create(5, 4, 3);
             }
             case 13 -> {
                 return create(3, 3, 3, 4);
@@ -86,6 +97,7 @@ public class Main {
     }
 
     private static Riddle create(int... ints) {
+        int counter = 0;
         while (true) {
             Riddle[] riddles = new Riddle[ints.length];
             for (int j = 0; j < ints.length; j++) {
@@ -93,7 +105,11 @@ public class Main {
                 riddles[j] = createRiddle(i);
             }
             Riddle c = Riddle.merge(riddles);
-            if (isValid(c)) return c;
+            if (isValid(c)) {
+                System.out.println(counter);
+                return c;
+            }
+            counter++;
         }
     }
 
@@ -126,7 +142,7 @@ public class Main {
             try {
                 Riddle riddle = generator.generate();
                 // System.out.println("im generated");
-                Set<List<Operation>> solutions = solver.solve(riddle);
+                Set<Operation[]> solutions = solver.solve(riddle);
                 // System.out.println("im solved");
                 if (solutions.size() == 1) {
                     // System.out.println("valid " + riddle);
@@ -155,16 +171,16 @@ public class Main {
         System.out.println(amount + " : valid " + valid + " / invalid " + invalid + " / error " + error);
     }
 
-    private static String getEquationRepresentation(Set<List<Operation>> list) {
+    private static String getEquationRepresentation(Set<Operation[]> list) {
         StringBuilder stringBuilder = new StringBuilder();
-        for (List<Operation> operations : list) {
+        for (Operation[] operations : list) {
             stringBuilder.append(getEquationString(operations));
             stringBuilder.append("=");
         }
         return stringBuilder.substring(0, stringBuilder.length() - 1);
     }
 
-    private static String getEquationString(List<Operation> operations) {
+    private static String getEquationString(Operation[] operations) {
         StringBuilder stringBuilder = new StringBuilder();
         char[] chars = new char[]{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
         int i = 0;
