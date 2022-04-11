@@ -1,13 +1,13 @@
 import com.franosch.bwinf.muellabfuhr.io.FileReader;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class FileReaderTest {
 
     @Test
     public void simpleFileTest(){
         FileReader fileReader = new FileReader(0, "src/test/resources/");
-        Assert.assertNotEquals(fileReader.getContent().size(), 0);
+        Assertions.assertNotEquals(fileReader.getContent().size(), 0);
     }
 
 }

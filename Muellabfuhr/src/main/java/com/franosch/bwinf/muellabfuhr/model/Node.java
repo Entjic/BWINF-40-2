@@ -3,30 +3,28 @@ package com.franosch.bwinf.muellabfuhr.model;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Getter
 public class Node {
 
     private final int id;
-    private final Set<Neighbor> neighbors;
+    private final List<Edge> edges;
     @Setter
     private DijkstraNode dijkstraNode;
 
     public Node(int id){
         this.id = id;
-        this.neighbors = new HashSet<>();
+        this.edges = new ArrayList<>();
         this.dijkstraNode = new DijkstraNode(id);
     }
 
-    public void appendNeighbor(Neighbor neighbor){
-        this.neighbors.add(neighbor);
+    public void appendEdge(Edge edge){
+        this.edges.add(edge);
     }
 
     public int getDegree(){
-        return neighbors.size();
+        return edges.size();
     }
 
     @Override

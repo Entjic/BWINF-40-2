@@ -80,6 +80,8 @@ public class NextGenSolver {
         Graph<Node, DefaultWeightedEdge> output = new CustomGraph<>(new NodeSupplier(), SupplierUtil.createDefaultWeightedEdgeSupplier());
         Graph<Node, DefaultWeightedEdge> odd = getOddGraph();
         MatchingAlgorithm.Matching<Node, DefaultWeightedEdge> perfect = perfectWeightMatching(odd);
+        System.out.println("perfect " + perfect.getEdges());
+        System.out.println("weight " + perfect.getWeight());
         merge(graph, output);
         for (DefaultWeightedEdge edge : perfect.getEdges()) {
             Node from = odd.getEdgeSource(edge);

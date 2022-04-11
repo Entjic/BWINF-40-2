@@ -4,33 +4,34 @@ import com.franosch.bwinf.muellabfuhr.io.FileReader;
 import com.franosch.bwinf.muellabfuhr.model.Node;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
-import org.jgrapht.alg.interfaces.MatchingAlgorithm;
-import org.jgrapht.alg.matching.blossom.v5.KolmogorovWeightedPerfectMatching;
-import org.jgrapht.alg.matching.blossom.v5.ObjectiveSense;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SolverTest {
 
+    private FileReader reader;
+
+    @BeforeEach
+    void setUp() {
+        reader = new FileReader(0, GraphInitializationTest.TEST_RESOURCES);
+    }
+
     @Test
-    public void playGround(){
-        FileReader fileReader = new FileReader(2, GraphInitializationTest.TEST_RESOURCES);
+    public void playGround() {
         Solver solver = new Solver();
-        solver.initGraph(fileReader);
+        solver.initGraph(reader);
         System.out.println(solver.findOddDegree().size());
         solver.makeEven();
 
     }
 
     @Test
-    public void morePlayGround(){
-        FileReader fileReader = new FileReader(8, GraphInitializationTest.TEST_RESOURCES);
-        NextGenSolver nextGenSolver = new NextGenSolver(fileReader);
-        System.out.println(nextGenSolver.getGraph());
+    public void morePlayGround() {
+        NextGenSolver nextGenSolver = new NextGenSolver(reader);
         Graph<Node, DefaultWeightedEdge> graph = nextGenSolver.makeEuler();
         GraphPath<Node, DefaultWeightedEdge> path = nextGenSolver.getEulerCycle(graph);
         System.out.println(path.getStartVertex());
-        System.out.println(path.getEndVertex());
         System.out.println(path.getVertexList());
         System.out.println(path.getWeight());
 

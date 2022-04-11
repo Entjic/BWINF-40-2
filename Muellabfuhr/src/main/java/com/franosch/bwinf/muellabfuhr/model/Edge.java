@@ -2,34 +2,57 @@ package com.franosch.bwinf.muellabfuhr.model;
 
 
 import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-
-import java.util.Objects;
 
 
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-@EqualsAndHashCode
-public class Edge{
+public class Edge {
     private final Path path;
-    private final double weight;
 
-    public static Neighbor create(Node from, Node to, double weight){
+    public static Neighbor create(Node from, Node to, double weight) {
         return new Neighbor(from, to, weight);
     }
 
-    public static Edge create(Node[] via, double weight){
+    public static Edge create(Node[] via, double weight) {
         final Path path = new Path(weight, via);
-        return new Edge(path, weight);
+        return new Edge(path);
+    }
+
+    public static Edge create(Path path, double weight) {
+        return new Edge(path);
+    }
+
+    public Node getEnd(Node start) {
+        if (path.getFrom().getId() == start.getId()) {
+            return path.getTo();
+        }
+        if (path.getTo().getId() == start.getId()) {
+            return path.getFrom();
+        }
+        return null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Edge edge = (Edge) o;
+
+        return path.equals(edge.path);
+    }
+
+    @Override
+    public int hashCode() {
+        return path.hashCode();
     }
 
     @Override
     public String toString() {
         return "Edge{" +
-                "path=" + path +
-                ", weight=" + weight +
+                "from " + path.getFrom() + " to " + path.getTo() +
                 '}';
     }
 }
