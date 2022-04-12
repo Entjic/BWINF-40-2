@@ -39,15 +39,10 @@ public class Graph {
     public void connect(int a, int b, Edge edge) {
         Node nodeA = nodes.get(a);
         Node nodeB = nodes.get(b);
-        System.out.println(2);
         connect(nodeA, nodeB, edge, true);
     }
 
     public void connect(Node a, Node b, Edge edge, boolean overRide) {
-        System.out.println(1);
-        System.out.println("edges" + edges);
-        System.out.println(edge);
-        System.out.println(overRide);
         if (!overRide) {
             connect(a, b, edge);
             edges.add(edge);
