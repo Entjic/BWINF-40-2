@@ -15,7 +15,7 @@ public class GraphInitializationTest {
         Graph graph = new Graph(root);
         graph.initGraph(fileReader);
         Assertions.assertEquals(4, graph.getRoot().getDegree());
-        Assertions.assertEquals(2, graph.findById(3).getDegree());
+        Assertions.assertEquals(2, graph.getNodes().get(3).getDegree());
     }
 
     @Test

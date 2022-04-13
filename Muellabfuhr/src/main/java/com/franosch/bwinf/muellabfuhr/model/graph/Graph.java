@@ -6,7 +6,6 @@ import com.franosch.bwinf.muellabfuhr.io.InputString;
 import lombok.Getter;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class Graph {
@@ -19,11 +18,14 @@ public class Graph {
     @Getter
     private final Map<Integer, Node> nodes;
 
+    private Map<Integer, DijkstraGraph> dijkstraGraphs;
+
     public Graph(Node root) {
         this.root = root;
         this.nodes = new HashMap<>();
         this.dijkstraNodeNodeMap = new HashMap<>();
         this.edges = new ArrayList<>();
+        this.dijkstraGraphs = new HashMap<>();
         insert(root);
     }
 
@@ -40,6 +42,10 @@ public class Graph {
         Node nodeA = nodes.get(a);
         Node nodeB = nodes.get(b);
         connect(nodeA, nodeB, edge, true);
+    }
+
+    public void invalidateDijkstra() {
+        this.dijkstraGraphs = new HashMap<>();
     }
 
     public void connect(Node a, Node b, Edge edge, boolean overRide) {
@@ -90,91 +96,36 @@ public class Graph {
         }
     }
 
-    public void generateShortestPaths(Node source) {
-        List<Node> open = new ArrayList<>();
-        Set<Node> closed = new HashSet<>();
-        open.add(source);
-        resetDijkstraNodes();
-        source.getDijkstraNode().setWeight(0);
-        while (!open.isEmpty()) {
 
-            Node current = open.get(0);
-            open.remove(current);
-            closed.add(current);
-            DijkstraNode dijkstraCurrent = current.getDijkstraNode();
-            for (Edge edge : current.getEdges()) {
-                Node neighborNode = edge.getEnd(current);
-                if (closed.contains(neighborNode)) {
-                    continue;
-                }
-                open.add(neighborNode);
-                DijkstraNode dijkstraNeighbor = neighborNode.getDijkstraNode();
-                double alternativeWeight = dijkstraCurrent.getWeight() + edge.getPath().getWeight();
-                double currentWeight = dijkstraNeighbor.getWeight();
-                if (alternativeWeight < currentWeight) {
-                    dijkstraNeighbor.setWeight(alternativeWeight);
-                    dijkstraNeighbor.setPredecessor(dijkstraCurrent);
-                }
-            }
-            open.sort(Comparator.comparingDouble(o -> o.getDijkstraNode().getWeight()));
-            Collections.reverse(open);
+    public DijkstraGraph getDijkstraGraph(Integer source) {
+        if (!dijkstraGraphs.containsKey(source)) {
+            DijkstraGraph dijkstraGraph = new DijkstraGraph(this, source);
+            dijkstraGraph.generateShortestPaths();
+            dijkstraGraphs.put(source, dijkstraGraph);
         }
+        return dijkstraGraphs.get(source);
     }
 
-    public Path getShortestPath(Node target) {
-        List<DijkstraNode> order = new ArrayList<>();
-        order.add(target.getDijkstraNode());
-        DijkstraNode current = target.getDijkstraNode();
-        while (current.getPredecessor() != null) {
-            current = current.getPredecessor();
-            order.add(current);
-        }
-        double weight = target.getDijkstraNode().getWeight();
-        Collections.reverse(order);
-        Node[] array = new Node[order.size()];
-        for (int i = 0; i < order.size(); i++) {
-            array[i] = dijkstraNodeNodeMap.get(order.get(i));
-        }
-        return new Path(weight, array);
+    public Path getShortestPath(Integer source, Integer target) {
+        DijkstraGraph dijkstraGraph = getDijkstraGraph(source);
+        return dijkstraGraph.getShortestPath(nodes.get(target));
     }
 
-
-    private void resetDijkstraNodes() {
-        applyAll(node -> {
-            node.setDijkstraNode(new DijkstraNode(node.getId()));
-            dijkstraNodeNodeMap.put(node.getDijkstraNode(), node);
-        });
+    public double getWeight(Integer source, Integer target) {
+        DijkstraGraph dijkstraGraph = getDijkstraGraph(source);
+        return dijkstraGraph.getWeight(nodes.get(target));
     }
+
 
     public Node findById(int id) {
         Predicate<Node> predicate = node -> node.getId() == id;
         return getAny(predicate);
     }
 
-    public Set<Node> findMultiple(Predicate<Node> predicate) {
-        Set<Node> output = new HashSet<>();
-        find(predicate, root, new HashSet<>(), output);
-        return output;
-    }
-
     public Node getAny(Predicate<Node> predicate) {
         Set<Node> output = new HashSet<>();
         find(predicate, root, new HashSet<>(), output);
         return output.stream().findAny().orElse(null);
-    }
-
-    public void applyAll(Consumer<Node> consumer) {
-        apply(consumer, root, new HashSet<>());
-    }
-
-    private void apply(Consumer<Node> consumer, Node current, Set<Node> closed) {
-        consumer.andThen(result -> {
-            closed.add(result);
-            result.getEdges().stream()
-                    .map(neighbor -> neighbor.getEnd(result))
-                    .filter(node -> !closed.contains(node))
-                    .forEach(node -> apply(consumer, node, closed));
-        }).accept(current);
     }
 
     private void find(Predicate<Node> predicate, Node current, Set<Node> closed, Set<Node> output) {
@@ -194,9 +145,9 @@ public class Graph {
         edges.forEach(edge -> stringBuilder
                 .append("\n")
                 .append(edge.getPath().getFrom())
-                .append(" : ")
+                .append(" ")
                 .append(edge.getPath().getTo())
-                .append(" weight ")
+                .append(" ")
                 .append(edge.getPath().getWeight()));
         return "Graph{" +
                 "root=" + root +

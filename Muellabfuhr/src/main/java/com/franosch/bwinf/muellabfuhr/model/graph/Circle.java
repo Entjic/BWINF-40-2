@@ -3,8 +3,16 @@ package com.franosch.bwinf.muellabfuhr.model.graph;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
-public record Circle(List<Edge> edges, double weight) {
+public final class Circle {
+    private final List<Edge> edges;
+    private final double weight;
+
+    public Circle(List<Edge> edges, double weight) {
+        this.edges = edges;
+        this.weight = weight;
+    }
 
     public Set<Node> getNodes() {
         Set<Node> out = new HashSet<>();
@@ -31,10 +39,11 @@ public record Circle(List<Edge> edges, double weight) {
 
     @Override
     public String toString() {
-        return "Circle{" +
+        return "";
+/*        return "Circle{" +
                 "weight=" + weight +
                 ", edges=" + edges +
-                '}';
+                '}';*/
     }
 
     @Override
@@ -57,4 +66,13 @@ public record Circle(List<Edge> edges, double weight) {
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         return result;
     }
+
+    public List<Edge> edges() {
+        return edges;
+    }
+
+    public double weight() {
+        return weight;
+    }
+
 }
