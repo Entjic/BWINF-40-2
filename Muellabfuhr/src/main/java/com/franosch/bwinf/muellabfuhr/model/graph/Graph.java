@@ -1,4 +1,4 @@
-package com.franosch.bwinf.muellabfuhr.model;
+package com.franosch.bwinf.muellabfuhr.model.graph;
 
 import com.franosch.bwinf.muellabfuhr.io.FileReader;
 import com.franosch.bwinf.muellabfuhr.io.InputParser;

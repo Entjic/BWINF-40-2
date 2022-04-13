@@ -1,8 +1,34 @@
-package com.franosch.bwinf.muellabfuhr.model;
+package com.franosch.bwinf.muellabfuhr.model.graph;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public record Circle(List<Edge> edges, double weight) {
+
+    public Set<Node> getNodes() {
+        Set<Node> out = new HashSet<>();
+        Node start = findStart();
+        Node current = start;
+        for (Edge edge : edges) {
+            out.add(current);
+            current = edge.getEnd(current);
+        }
+        return out;
+    }
+
+    private Node findStart() {
+        Edge zero = edges.get(0);
+        Edge one = edges.get(1);
+        if (zero.getPath().getTo().equals(one.getPath().getFrom())) {
+            return zero.getPath().getFrom();
+        }
+        if (zero.getPath().getTo().equals(one.getPath().getTo())) {
+            return zero.getPath().getFrom();
+        }
+        return zero.getPath().getTo();
+    }
+
     @Override
     public String toString() {
         return "Circle{" +

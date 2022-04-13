@@ -1,4 +1,4 @@
-package com.franosch.bwinf.muellabfuhr.model;
+package com.franosch.bwinf.muellabfuhr.model.graph;
 
 public class Neighbor extends Edge{
     protected Neighbor(Node from, Node to, double weight) {

@@ -1,7 +1,7 @@
 package com.franosch.bwinf.muellabfuhr;
 
 import com.franosch.bwinf.muellabfuhr.io.FileReader;
-import com.franosch.bwinf.muellabfuhr.model.*;
+import com.franosch.bwinf.muellabfuhr.model.graph.*;
 
 import java.util.*;
 
@@ -117,14 +117,52 @@ public class Solver {
         for (int i = 0; i < k; i++) {
             runner.put(i, new ArrayList<>());
         }
-        for (Circle circle : circles) {
+        List<Circle> open = new ArrayList<>(circles);
+        open.sort(Comparator.comparingDouble(Circle::weight));
+
+        for (int i = 0; i < k; i++) {
             List<Circle> lowest = getLowest(runner);
+            Circle circle = circles.get(i);
             lowest.add(circle);
+            open.remove(circle);
+        }
+        while (!open.isEmpty()) {
+            List<Circle> lowest = getLowest(runner);
+            Circle last = lowest.get(lowest.size() - 1);
+            List<Circle> neighbouring = getNeighbourCircle(last, open);
+            Circle circle;
+            if (!neighbouring.isEmpty()) {
+                circle = neighbouring.get(0);
+                lowest.add(circle);
+                open.remove(circle);
+                continue;
+            }
+            break;
         }
         for (Integer integer : runner.keySet()) {
             List<Circle> current = runner.get(integer);
-            System.out.println("Runner " + integer + ": weight " + sum(current) + " circles " + current);
+            System.out.println("Runner " + integer + " got " + current.size() + " circles: weight " + sum(current) + " circles " + current);
         }
+        for (Circle circle : open) {
+            System.out.println("Still open circles " + circle);
+        }
+    }
+
+    private List<Circle> getNeighbourCircle(Circle circle, List<Circle> circles) {
+        List<Circle> out = new ArrayList<>();
+        for (Circle current : circles) {
+            if (isNeighbour(circle, current)) {
+                out.add(current);
+            }
+        }
+        return out;
+    }
+
+    private boolean isNeighbour(Circle current, Circle suspect) {
+        for (Node node : current.getNodes()) {
+            if (suspect.getNodes().contains(node)) return true;
+        }
+        return false;
     }
 
     private List<Circle> getLowest(Map<Integer, List<Circle>> runner) {
@@ -177,12 +215,25 @@ public class Solver {
 
     private void insert(Set<Edge> min) {
         for (Edge edge : min) {
-            Node a = edge.getPath().getFrom();
-            Node b = edge.getPath().getTo();
-            Node actualA = graph.getNodes().get(a.getId());
-            Node actualB = graph.getNodes().get(b.getId());
-            graph.connect(actualA, actualB, edge, false);
+            for (int i = 0; i < edge.getPath().getPath().length - 1; i++) {
+                Node a = edge.getPath().getPath()[i];
+                Node b = edge.getPath().getPath()[i + 1];
+                Node actualA = graph.getNodes().get(a.getId());
+                Node actualB = graph.getNodes().get(b.getId());
+                Edge edge1 = Edge.create(actualA, actualB, 0);
+                Edge target = find(edge1);
+                Edge copy = Edge.create(target.getPath(), target.getPath().getWeight());
+                graph.connect(actualA, actualB, copy, false);
+            }
+
         }
+    }
+
+    private Edge find(Edge edge) {
+        for (Edge graphEdge : graph.getEdges()) {
+            if (graphEdge.equals(edge)) return graphEdge;
+        }
+        return null;
     }
 
     private Graph completeGraph(Set<Node> odds) {

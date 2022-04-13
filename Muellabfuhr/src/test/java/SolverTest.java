@@ -1,7 +1,7 @@
 import com.franosch.bwinf.muellabfuhr.NextGenSolver;
 import com.franosch.bwinf.muellabfuhr.Solver;
 import com.franosch.bwinf.muellabfuhr.io.FileReader;
-import com.franosch.bwinf.muellabfuhr.model.Node;
+import com.franosch.bwinf.muellabfuhr.model.graph.Node;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -14,7 +14,7 @@ public class SolverTest {
 
     @BeforeEach
     void setUp() {
-        reader = new FileReader(3, GraphInitializationTest.TEST_RESOURCES);
+        reader = new FileReader(2, GraphInitializationTest.TEST_RESOURCES);
     }
 
     @Test

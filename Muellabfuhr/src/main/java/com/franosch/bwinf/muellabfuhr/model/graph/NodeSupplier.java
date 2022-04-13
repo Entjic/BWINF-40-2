@@ -1,4 +1,4 @@
-package com.franosch.bwinf.muellabfuhr.model;
+package com.franosch.bwinf.muellabfuhr.model.graph;
 
 import java.util.function.Supplier;
 

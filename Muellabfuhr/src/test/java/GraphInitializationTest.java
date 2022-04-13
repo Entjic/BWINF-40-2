@@ -1,7 +1,7 @@
 import com.franosch.bwinf.muellabfuhr.Solver;
 import com.franosch.bwinf.muellabfuhr.io.FileReader;
-import com.franosch.bwinf.muellabfuhr.model.Graph;
-import com.franosch.bwinf.muellabfuhr.model.Node;
+import com.franosch.bwinf.muellabfuhr.model.graph.Graph;
+import com.franosch.bwinf.muellabfuhr.model.graph.Node;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
