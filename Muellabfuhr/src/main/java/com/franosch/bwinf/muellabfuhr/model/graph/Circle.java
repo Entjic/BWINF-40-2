@@ -3,9 +3,8 @@ package com.franosch.bwinf.muellabfuhr.model.graph;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
-public final class Circle {
+public class Circle {
     private final List<Edge> edges;
     private final double weight;
 
@@ -39,11 +38,10 @@ public final class Circle {
 
     @Override
     public String toString() {
-        return "";
-/*        return "Circle{" +
+        return "Circle{" +
                 "weight=" + weight +
                 ", edges=" + edges +
-                '}';*/
+                '}';
     }
 
     @Override
