@@ -12,7 +12,6 @@ public class Graph {
 
     @Getter
     private final Node root;
-    private final Map<DijkstraNode, Node> dijkstraNodeNodeMap;
     @Getter
     private final List<Edge> edges;
     @Getter
@@ -23,7 +22,6 @@ public class Graph {
     public Graph(Node root) {
         this.root = root;
         this.nodes = new HashMap<>();
-        this.dijkstraNodeNodeMap = new HashMap<>();
         this.edges = new ArrayList<>();
         this.dijkstraGraphs = new HashMap<>();
         insert(root);
@@ -44,9 +42,6 @@ public class Graph {
         connect(nodeA, nodeB, edge, true);
     }
 
-    public void invalidateDijkstra() {
-        this.dijkstraGraphs = new HashMap<>();
-    }
 
     public void connect(Node a, Node b, Edge edge, boolean overRide) {
         if (!overRide) {

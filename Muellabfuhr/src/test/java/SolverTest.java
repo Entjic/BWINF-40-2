@@ -17,7 +17,7 @@ public class SolverTest {
 
     @BeforeEach
     void setUp() {
-        reader = new FileReader(7, GraphInitializationTest.TEST_RESOURCES);
+        reader = new FileReader(1, GraphInitializationTest.TEST_RESOURCES);
     }
 
     @Test

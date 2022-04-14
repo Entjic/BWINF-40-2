@@ -20,7 +20,7 @@ public class Edge {
         return new Edge(path);
     }
 
-    public static Edge create(Path path, double weight) {
+    public static Edge create(Path path) {
         return new Edge(path);
     }
 

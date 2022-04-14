@@ -13,6 +13,15 @@ public class Circle {
         this.weight = weight;
     }
 
+    public Circle(List<Edge> edges) {
+        double w = 0;
+        for (Edge edge : edges) {
+            w += edge.getPath().getWeight();
+        }
+        this.weight = w;
+        this.edges = edges;
+    }
+
     public Set<Node> getNodes() {
         Set<Node> out = new HashSet<>();
         Node start = findStart();
@@ -39,8 +48,8 @@ public class Circle {
     @Override
     public String toString() {
         return "Circle{" +
-                "weight=" + weight +
-                ", edges=" + edges +
+                "edges=" + edges +
+                ", weight=" + weight +
                 '}';
     }
 

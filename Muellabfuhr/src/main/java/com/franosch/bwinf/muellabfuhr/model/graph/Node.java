@@ -10,13 +10,10 @@ public class Node {
 
     private final int id;
     private final List<Edge> edges;
-    @Setter
-    private DijkstraNode dijkstraNode;
 
     public Node(int id){
         this.id = id;
         this.edges = new ArrayList<>();
-        this.dijkstraNode = new DijkstraNode(id);
     }
 
     public void appendEdge(Edge edge){

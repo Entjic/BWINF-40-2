@@ -31,26 +31,24 @@ public class DijkstraGraph {
             if (c == 0) return 0;
             return 1;
         });
-        Set<Node> closed = new HashSet<>();
-        open.add(graph.getNodes().get(source));
         nodes.get(source).setWeight(0);
+        for (DijkstraNode value : nodes.values()) {
+            open.add(graph.getNodes().get(value.getId()));
+        }
         while (!open.isEmpty()) {
             Node current = open.remove();
-            open.remove(current);
-            closed.add(current);
             DijkstraNode dijkstraCurrent = nodes.get(current.getId());
             for (Edge edge : current.getEdges()) {
                 Node neighborNode = edge.getEnd(current);
-                if (closed.contains(neighborNode)) {
-                    continue;
-                }
-                open.add(neighborNode);
                 DijkstraNode dijkstraNeighbor = nodes.get(neighborNode.getId());
                 double alternativeWeight = dijkstraCurrent.getWeight() + edge.getPath().getWeight();
                 double currentWeight = dijkstraNeighbor.getWeight();
                 if (alternativeWeight < currentWeight) {
                     dijkstraNeighbor.setWeight(alternativeWeight);
                     dijkstraNeighbor.setPredecessor(dijkstraCurrent);
+                    Node translated = graph.getNodes().get(dijkstraNeighbor.getId());
+                    open.remove(translated);
+                    open.add(translated);
                 }
             }
         }

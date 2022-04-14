@@ -1,6 +1,7 @@
 package com.franosch.bwinf.muellabfuhr;
 
 import com.franosch.bwinf.muellabfuhr.io.FileReader;
+import com.franosch.bwinf.muellabfuhr.model.Runner;
 import com.franosch.bwinf.muellabfuhr.model.graph.*;
 
 import java.util.*;
@@ -70,10 +71,8 @@ public class Solver {
         Edge edge;
         List<Edge> currentPath = new ArrayList<>();
         do {
-            System.out.println(current.getId() + " " + start.getId());
             if (!current.equals(start) && isSubCircle(current, currentPath)) {
                 Circle subCircle = getSubCircle(current, currentPath);
-                System.out.println("sub circle " + subCircle);
                 currentPath.removeAll(subCircle.edges());
                 out.add(subCircle);
             }
@@ -83,8 +82,7 @@ public class Solver {
             open.remove(edge);
         }
         while ((!isCircle(start, currentPath) && !open.isEmpty()));
-        Circle circle = new Circle(currentPath, currentPath.stream().mapToDouble(value -> value.getPath().getWeight()).sum());
-        System.out.println("normal circle " + circle);
+        Circle circle = new Circle(currentPath);
         out.add(circle);
         return out;
     }
@@ -115,71 +113,70 @@ public class Solver {
         }
         List<Edge> copy = new ArrayList<>(path);
         List<Edge> out = copy.subList(copy.size() - i - 1, copy.size());
-        Circle circle = new Circle(out, out.stream().mapToDouble(value -> value.getPath().getWeight()).sum());
-        System.out.println(circle);
+        Circle circle = new Circle(out);
         return circle;
     }
 
-    public Map<Integer, List<Circle>> allocate(int k, List<Circle> circles) {
-        Map<Integer, List<Circle>> runner = new HashMap<>();
+    public Map<Integer, Runner> allocate(int k, List<Circle> circles) {
+        Map<Integer, Runner> runner = new HashMap<>();
         for (int i = 0; i < k; i++) {
-            runner.put(i, new ArrayList<>());
+            runner.put(i, new Runner(graph));
         }
-        List<Circle> open = new ArrayList<>(circles);
-        open.sort((o1, o2) -> {
+
+        circles.sort((o1, o2) -> {
             double weight1 = o1.weight();
             double weight2 = o2.weight();
             if (weight1 > weight2) return -1;
             if (weight1 < weight2) return 1;
             return 0;
         });
+        List<Circle> open = new ArrayList<>(circles);
         allocateBiggest(runner.values(), open);
 
-        Map<Integer, List<Circle>> map = compute(runner, open);
-        List<Circle> biggest = getBiggestRunner(map.values());
-        Map<Integer, List<Circle>> moreRunner = new HashMap<>();
+        Map<Integer, Runner> map = compute(runner, open);
+        Runner biggest = getBiggestRunner(map.values());
+        Map<Integer, Runner> moreRunner = new HashMap<>();
         for (int i = 0; i < k; i++) {
-            moreRunner.put(i, new ArrayList<>());
+            moreRunner.put(i, new Runner(graph));
         }
         open = new ArrayList<>(circles);
-        Circle biggestCircle = getBiggestCircle(biggest);
-        List<Circle> next0 = new ArrayList<>(biggest);
+        Circle biggestCircle = getBiggestCircle(biggest.getCircles());
+        List<Circle> next0 = new ArrayList<>(biggest.getCircles());
         next0.remove(biggestCircle);
         Circle secondBiggestCircle = getBiggestCircle(next0);
-        moreRunner.get(0).add(biggestCircle);
+        if (biggestCircle == null || secondBiggestCircle == null) {
+            return map;
+        }
+        moreRunner.get(0).getCircles().add(biggestCircle);
         open.remove(biggestCircle);
-        moreRunner.get(1).add(secondBiggestCircle);
+        moreRunner.get(1).getCircles().add(secondBiggestCircle);
         open.remove(secondBiggestCircle);
-        Collection<List<Circle>> runners = moreRunner.values().stream().filter(circles1 -> circles1.size() == 0).collect(Collectors.toList());
+        Collection<Runner> runners = moreRunner.values().stream().filter(r -> r.getCircles().size() == 0).collect(Collectors.toList());
         allocateBiggest(runners, open);
-        Map<Integer, List<Circle>> nextMap = compute(moreRunner, open);
+        Map<Integer, Runner> nextMap = compute(moreRunner, open);
         System.out.println(nextMap);
 
         // ---
 
 
-        List<Circle> biggest0 = getBiggestRunner(nextMap.values());
-        Map<Integer, List<Circle>> moreRunner0 = new HashMap<>();
+        Runner biggest0 = getBiggestRunner(nextMap.values());
+        Map<Integer, Runner> moreRunner0 = new HashMap<>();
         for (int i = 0; i < k; i++) {
-            moreRunner0.put(i, new ArrayList<>());
+            moreRunner0.put(i, new Runner(graph));
         }
         open = new ArrayList<>(circles);
-        Circle a0 = getBiggestCircle(biggest0);
-        System.out.println(a0);
-        System.out.println(biggest0.get(0));
-        List<Circle> next = new ArrayList<>(biggest0);
+        Circle a0 = getBiggestCircle(biggest0.getCircles());
+        List<Circle> next = new ArrayList<>(biggest0.getCircles());
         next.remove(a0);
         Circle b0 = getBiggestCircle(next);
         next.remove(b0);
         Set<Circle> circleSet = new HashSet<>();
 
         if (a0.equals(biggestCircle) || a0.equals(secondBiggestCircle)) {
-            System.out.println("asdasd");
             a0 = getBiggestCircle(next);
             next.remove(a0);
         }
-        if(b0.equals(biggestCircle) || b0.equals(secondBiggestCircle)){
-            System.out.println("dsfgdfgdfg");
+        if (b0.equals(biggestCircle) || b0.equals(secondBiggestCircle)) {
             b0 = getBiggestCircle(next);
             next.remove(b0);
         }
@@ -189,25 +186,48 @@ public class Solver {
         circleSet.add(b0);
         int i = 0;
         for (Circle circle : circleSet) {
-            moreRunner0.get(i).add(circle);
+            moreRunner0.get(i).getCircles().add(circle);
             open.remove(circle);
             System.out.println("cool circle " + circle);
             i++;
         }
-        Collection<List<Circle>> runners0 = moreRunner0.values().stream().filter(circles1 -> circles1.size() == 0).collect(Collectors.toList());
+        Collection<Runner> runners0 = moreRunner0.values().stream().filter(circles1 -> circles1.getCircles().size() == 0).collect(Collectors.toList());
         allocateBiggest(runners0, open);
-        Map<Integer, List<Circle>> nextMap0 = compute(moreRunner0, open);
+        Map<Integer, Runner> nextMap0 = compute(moreRunner0, open);
         System.out.println(nextMap0);
 
+        Runner biggestRunner = getBiggestRunner(nextMap0.values());
+        if (nextMap.size() >= 5 && !nextMap.get(4).equals(biggestRunner)) {
+            Map<Integer, Runner> muchMoreRunners = new HashMap<>();
+            Circle hugeCircle = getBiggestCircle(biggestRunner.getCircles());
+            List<Circle> copy = new ArrayList<>(biggestRunner.getCircles());
+            copy.remove(hugeCircle);
+            Circle second = getBiggestCircle(copy);
+            for (int j = 0; j < k; j++) {
+                muchMoreRunners.put(j, new Runner(graph));
+            }
+            open = new ArrayList<>(circles);
+            open.remove(second);
+            i = 0;
+            for (Circle circle : circleSet) {
+                muchMoreRunners.get(i).getCircles().add(circle);
+                open.remove(circle);
+                System.out.println("cool circle " + circle);
+                i++;
+            }
+            muchMoreRunners.get(4).getCircles().add(second);
+            nextMap = compute(muchMoreRunners, open);
+            System.out.println(nextMap);
+        }
 
         return nextMap;
     }
 
-    private List<Circle> getBiggestRunner(Collection<List<Circle>> runners) {
-        List<Circle> biggest = null;
+    private Runner getBiggestRunner(Collection<Runner> runners) {
+        Runner biggest = null;
         double weight = 0;
-        for (List<Circle> runner : runners) {
-            double currentWeight = sum(runner);
+        for (Runner runner : runners) {
+            double currentWeight = runner.calcWeight();
             if (currentWeight > weight) {
                 weight = currentWeight;
                 biggest = runner;
@@ -216,11 +236,11 @@ public class Solver {
         return biggest;
     }
 
-    private void allocateBiggest(Collection<List<Circle>> runners, List<Circle> open) {
-        List<List<Circle>> copy = new ArrayList<>(runners);
+    private void allocateBiggest(Collection<Runner> runners, List<Circle> open) {
+        List<Runner> copy = new ArrayList<>(runners);
         while (!copy.isEmpty()) {
-            List<Circle> current = getLowest(runners);
-            current.add(open.get(0));
+            Runner current = getLowest(runners);
+            current.getCircles().add(open.get(0));
             open.remove(0);
             copy.remove(current);
         }
@@ -238,29 +258,22 @@ public class Solver {
         return biggest;
     }
 
-    private Map<Integer, List<Circle>> compute(Map<Integer, List<Circle>> runner, List<Circle> open) {
+    private Map<Integer, Runner> compute(Map<Integer, Runner> runners, List<Circle> open) {
         while (!open.isEmpty()) {
             // System.out.println(open);
-            Circle circle = handleCircle(runner, open);
+            Circle circle = handleCircle(runners, open);
             // System.out.println(circle);
             open.remove(circle);
         }
-        for (Integer integer : runner.keySet()) {
-            List<Circle> current = runner.get(integer);
-            System.out.println("Runner " + integer + " got " + current.size() + " circles: weight " + sum(current) + " circles " + current);
+        for (Integer integer : runners.keySet()) {
+            Runner current = runners.get(integer);
+            System.out.println("Runner " + integer + " got " + current.getCircles().size()
+                    + " circles: weight " + current.calcWeight() + " circles " + current.getCircles() + " bridge " + current.getBridge());
         }
         StringBuilder stringBuilder = new StringBuilder();
-        runner.keySet().forEach(integer -> stringBuilder.append("\n").append(sum(runner.get(integer))));
+        runners.keySet().forEach(integer -> stringBuilder.append("\n").append(runners.get(integer).calcWeight()));
         System.out.println(stringBuilder);
-        double weight = 0;
-        for (List<Circle> value : runner.values()) {
-            weight += sum(value);
-        }
-        System.out.println("Overall weight " + weight);
-        for (Circle circle : open) {
-            System.out.println("Still open circles " + circle);
-        }
-        return runner;
+        return runners;
     }
 
     private List<Circle> getNeighbourCircle(Circle circle, List<Circle> circles) {
@@ -280,31 +293,30 @@ public class Solver {
         return false;
     }
 
-    private Circle handleCircle(Map<Integer, List<Circle>> runnerMap, List<Circle> open) {
-        List<List<Circle>> openRunner = new ArrayList<>(runnerMap.values());
+    private Circle handleCircle(Map<Integer, Runner> runnerMap, List<Circle> open) {
+        List<Runner> openRunner = new ArrayList<>(runnerMap.values());
         while (!openRunner.isEmpty()) {
-            List<Circle> runner = getLowest(openRunner);
+            Runner runner = getLowest(openRunner);
             openRunner.remove(runner);
-            List<Circle> list = new ArrayList<>(runner);
+            List<Circle> list = new ArrayList<>(runner.getCircles());
             Collections.reverse(list);
             for (Circle inner : list) {
                 List<Circle> neighbouring = getNeighbourCircle(inner, open);
                 if (!neighbouring.isEmpty()) {
                     // System.out.println("found smth");
                     Circle current = neighbouring.get(0);
-                    runner.add(current);
+                    runner.getCircles().add(current);
                     return current;
                 }
             }
         }
         return null;
     }
-
-    private List<Circle> getLowest(Collection<List<Circle>> runner) {
-        List<Circle> low = null;
+    private Runner getLowest(Collection<Runner> runner) {
+        Runner low = null;
         double weight = Double.MAX_VALUE;
-        for (List<Circle> value : runner) {
-            double currentWeight = sum(value);
+        for (Runner value : runner) {
+            double currentWeight = value.calcWeight();
             if (currentWeight < weight) {
                 low = value;
                 weight = currentWeight;
@@ -357,7 +369,7 @@ public class Solver {
                 Node actualB = graph.getNodes().get(b.getId());
                 Edge edge1 = Edge.create(actualA, actualB, 0);
                 Edge target = find(edge1);
-                Edge copy = Edge.create(target.getPath(), target.getPath().getWeight());
+                Edge copy = Edge.create(target.getPath());
                 graph.connect(actualA, actualB, copy, false);
             }
 
@@ -383,7 +395,7 @@ public class Solver {
             inners.remove(outer);
             for (Node inner : inners) {
                 Path path = this.graph.getShortestPath(outer.getId(), inner.getId());
-                Edge edge = Edge.create(path, path.getWeight());
+                Edge edge = Edge.create(path);
                 // System.out.println("connecting " + edge);
                 complete.connect(outer.getId(), inner.getId(), edge);
             }
