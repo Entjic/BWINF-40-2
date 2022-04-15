@@ -1,7 +1,8 @@
 import com.franosch.bwinf.muellabfuhr.NextGenSolver;
 import com.franosch.bwinf.muellabfuhr.Solver;
 import com.franosch.bwinf.muellabfuhr.io.FileReader;
-import com.franosch.bwinf.muellabfuhr.model.graph.Circle;
+import com.franosch.bwinf.muellabfuhr.model.Result;
+import com.franosch.bwinf.muellabfuhr.model.graph.Cycle;
 import com.franosch.bwinf.muellabfuhr.model.graph.Node;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
@@ -9,6 +10,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.List;
 
 public class SolverTest {
@@ -17,7 +19,7 @@ public class SolverTest {
 
     @BeforeEach
     void setUp() {
-        reader = new FileReader(1, GraphInitializationTest.TEST_RESOURCES);
+        reader = new FileReader(7, GraphInitializationTest.TEST_RESOURCES);
     }
 
     @Test
@@ -26,8 +28,10 @@ public class SolverTest {
         solver.initGraph(reader);
         System.out.println(solver.findOddDegree().size());
         solver.makeEven();
-        List<Circle> cpp = solver.solveChinesePostmanProblem();
-        solver.allocate(5, cpp);
+        List<Cycle> cpp = solver.solveChinesePostmanProblem();
+        List<Result> results = solver.allocate(5, cpp);
+        Collections.sort(results);
+        System.out.println(results);
 
     }
 

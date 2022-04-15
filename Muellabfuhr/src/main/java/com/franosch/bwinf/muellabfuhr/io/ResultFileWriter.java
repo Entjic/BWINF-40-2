@@ -1,0 +1,44 @@
+package com.franosch.bwinf.muellabfuhr.io;
+
+import com.franosch.bwinf.muellabfuhr.model.Result;
+import com.franosch.bwinf.muellabfuhr.model.Runner;
+import com.franosch.bwinf.muellabfuhr.model.graph.Node;
+import com.franosch.bwinf.muellabfuhr.model.graph.Path;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+
+import java.io.File;
+import java.io.PrintWriter;
+
+@RequiredArgsConstructor
+public class ResultFileWriter {
+    private final Result result;
+
+    @SneakyThrows
+    public void writeFile() {
+        String filePath = new File("").getAbsolutePath();
+        File file = new File(filePath.concat("/muellabfuhr/out/result.txt"));
+        PrintWriter fileWriter = new PrintWriter(file);
+        int i = 1;
+        for (Runner runner : result.getRunners()) {
+            fileWriter.println("Tag " + i + ": " + generateRunnerOut(runner));
+            i++;
+        }
+        fileWriter.println("Maximale Laenge einer Tagestour: " + (int) result.getWorstWeight());
+        fileWriter.close();
+    }
+
+    private String generateRunnerOut(Runner runner) {
+        StringBuilder stringBuilder = new StringBuilder();
+        Path path = runner.calcFinalPath();
+        for (Node node : path.getPath()) {
+            stringBuilder.append(node.getId()).append(" -> ");
+        }
+        String string = stringBuilder.substring(0, stringBuilder.length() - 3);
+        stringBuilder = new StringBuilder();
+        stringBuilder.append("Gesamtlange: ").append((int) path.getWeight()).append(" Pfad: ").append(string);
+        return stringBuilder.toString();
+    }
+
+
+}
