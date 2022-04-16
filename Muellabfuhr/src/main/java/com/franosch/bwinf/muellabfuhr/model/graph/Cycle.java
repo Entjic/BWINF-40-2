@@ -80,16 +80,13 @@ public class Cycle {
     }
 
 
-    public boolean isCircleNode(Node node) {
-        for (Node circleNode : getNodes()) {
-            if (circleNode.equals(node)) return true;
+    public boolean isCycleNode(Node node) {
+        for (Node cycleNode : getNodes()) {
+            if (cycleNode.equals(node)) return true;
         }
         return false;
     }
 
-    public int getLength() {
-        return edges.size();
-    }
 
     private Node findStart() {
         Edge zero = edges.get(0);
@@ -106,7 +103,8 @@ public class Cycle {
     @Override
     public String toString() {
         return "Circle{" +
-                "weight=" + weight +
+                "id=" + id +
+                ", weight=" + weight +
                 ", edges=" + edges +
                 '}';
     }

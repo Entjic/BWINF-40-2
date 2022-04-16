@@ -4,6 +4,7 @@ import com.franosch.bwinf.muellabfuhr.io.FileReader;
 import com.franosch.bwinf.muellabfuhr.model.Result;
 import com.franosch.bwinf.muellabfuhr.model.Runner;
 import com.franosch.bwinf.muellabfuhr.model.graph.*;
+import com.franosch.bwinf.muellabfuhr.model.tuple.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -35,6 +36,13 @@ public class Solver {
             System.out.println("weight " + weight);
             insert(min);
             System.out.println(graph);
+            genDijkstra();
+        }
+    }
+
+    private void genDijkstra() {
+        for (Node value : graph.getNodes().values()) {
+            graph.getDijkstraGraph(value.getId());
         }
     }
 
@@ -298,6 +306,7 @@ public class Solver {
     }
 
     private Cycle handleCircle(Map<Integer, Runner> runnerMap, List<Cycle> open) {
+        Runner biggest = getBiggest(runnerMap.values());
         List<Runner> openRunner = new ArrayList<>(runnerMap.values());
         while (!openRunner.isEmpty()) {
             Runner runner = getLowest(openRunner);
@@ -313,8 +322,50 @@ public class Solver {
                     return current;
                 }
             }
+            Pair<Cycle, Double> pair = getNonNeighbouringCycle(runner, open);
+            double combined = runner.calcWeight() + pair.getLeft().weight() + 2 * pair.getRight();
+            if (biggest.calcWeight() > combined) {
+                runner.getCycles().add(pair.getLeft());
+                runner.setBias(runner.getBias() + pair.getRight());
+                return pair.getLeft();
+            }
         }
         return null;
+    }
+
+    private Runner getBiggest(Collection<Runner> runners) {
+        double weight = 0;
+        Runner biggest = null;
+        for (Runner runner : runners) {
+            double currentWeight = runner.calcWeight();
+            if (currentWeight > weight) {
+                weight = currentWeight;
+                biggest = runner;
+            }
+        }
+        return biggest;
+    }
+
+    private Pair<Cycle, Double> getNonNeighbouringCycle(Runner runner, List<Cycle> open) {
+        List<Cycle> list = new ArrayList<>(runner.getCycles());
+        Collections.reverse(list);
+        Cycle best = null;
+        double weight = Double.MAX_VALUE;
+        for (Cycle cycle : open) {
+            for (Cycle allocated : list) {
+                for (Node node : allocated.getNodes()) {
+                    for (Node cycleNode : cycle.getNodes()) {
+                        DijkstraGraph dijkstraGraph = graph.getDijkstraGraph(node.getId());
+                        double weightCurrent = dijkstraGraph.getWeight(cycleNode);
+                        if (weightCurrent < weight) {
+                            weight = weightCurrent;
+                            best = cycle;
+                        }
+                    }
+                }
+            }
+        }
+        return Pair.of(best, weight);
     }
 
     private Runner getLowest(Collection<Runner> runner) {

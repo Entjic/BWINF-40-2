@@ -14,6 +14,8 @@ import java.io.PrintWriter;
 public class ResultFileWriter {
     private final Result result;
 
+    private double worstWeight = 0;
+
     @SneakyThrows
     public void writeFile() {
         String filePath = new File("").getAbsolutePath();
@@ -24,13 +26,17 @@ public class ResultFileWriter {
             fileWriter.println("Tag " + i + ": " + generateRunnerOut(runner));
             i++;
         }
-        fileWriter.println("Maximale Laenge einer Tagestour: " + (int) result.getWorstWeight());
+        fileWriter.println("Maximale Laenge einer Tagestour: " + (int) worstWeight);
         fileWriter.close();
     }
 
     private String generateRunnerOut(Runner runner) {
         StringBuilder stringBuilder = new StringBuilder();
-        Path path = runner.calcFinalPath();
+        Path path = runner.getFinalPath();
+        System.out.println(runner.calcWeight());
+        if (path.getWeight() > worstWeight) {
+            worstWeight = path.getWeight();
+        }
         for (Node node : path.getPath()) {
             stringBuilder.append(node.getId()).append(" -> ");
         }

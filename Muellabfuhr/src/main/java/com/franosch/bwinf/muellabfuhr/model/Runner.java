@@ -1,10 +1,9 @@
 package com.franosch.bwinf.muellabfuhr.model;
 
-import com.franosch.bwinf.muellabfuhr.model.graph.Cycle;
-import com.franosch.bwinf.muellabfuhr.model.graph.Graph;
-import com.franosch.bwinf.muellabfuhr.model.graph.Node;
-import com.franosch.bwinf.muellabfuhr.model.graph.Path;
+import com.franosch.bwinf.muellabfuhr.model.graph.*;
+import com.franosch.bwinf.muellabfuhr.model.tuple.Pair;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -15,6 +14,10 @@ public class Runner {
     private final Graph graph;
 
     @Getter
+    @Setter
+    private double bias;
+
+    @Getter
     private Path bridge;
 
     public Runner(Graph graph) {
@@ -23,14 +26,22 @@ public class Runner {
     }
 
     public double calcWeight() {
-        double weight = sumCircles();
+        double weight = sumCycles();
         bridge = calcBridge();
         if (bridge == null) return weight;
         weight += bridge.getWeight() * 2;
+        weight += bias * 2;
         return weight;
     }
 
-    public Path calcFinalPath() {
+    public Path getFinalPath() {
+        Path path = calcFinalPath();
+        Path result = new Path(calcWeightFromPath(path), path.getPath());
+        return result;
+    }
+
+
+    private Path calcFinalPath() {
         if (bridge == null) {
             bridge = calcBridge();
         }
@@ -52,7 +63,7 @@ public class Runner {
         }
         Cycle firstCycle = null;
         for (Cycle cycle : cycles) {
-            if (cycle.isCircleNode(current)) {
+            if (cycle.isCycleNode(current)) {
                 firstCycle = cycle;
                 break;
             }
@@ -62,7 +73,27 @@ public class Runner {
         copy.remove(firstCycle);
         firstCycle.sortStartingWith(current);
         calcFinalPathRec(current, current, firstCycle, copy, path, true, 0);
+        while (!copy.isEmpty()) {
+            List<Cycle> closed = new CopyOnWriteArrayList<>(cycles);
+            closed.removeAll(copy);
+            Pair<Cycle, Path> pair = getShortestBridgeBetweenClusters(copy, closed);
+            Node start = pair.getRight().getTo();
+            pair.getLeft().sortStartingWith(start);
+            current = pair.getLeft().edges().get(0).getEnd(start);
+            copy.remove(pair.getLeft());
+            List<Node> generatedPath = new ArrayList<>();
+            calcFinalPathRec(start, current, pair.getLeft(), copy, generatedPath, true, 1);
 
+            List<Node> list = new ArrayList<>();
+            List<Node> bridgePath = Arrays.asList(pair.getRight().getPath());
+            list.addAll(bridgePath);
+            list.addAll(generatedPath);
+            List<Node> reversed = new ArrayList<>(bridgePath);
+            Collections.reverse(reversed);
+            list.addAll(reversed);
+            int index = path.indexOf(pair.getRight().getFrom());
+            path.addAll(index, list.subList(0, list.size() - 1));
+        }
 
         if (bridge.getWeight() > 0) {
             List<Node> reversedBridge = Arrays.asList(bridge.getPath());
@@ -71,16 +102,45 @@ public class Runner {
         } else {
             path.add(graph.getRoot());
         }
-        return new Path(calcWeight(), path.toArray(Node[]::new));
+        return new Path(0, path.toArray(Node[]::new));
     }
+
+    private double calcWeightFromPath(Path path) {
+        Node[] pathPath = path.getPath();
+        double weight = 0;
+        for (int i = 0; i < pathPath.length - 1; i++) {
+            Node node = pathPath[i];
+            Node next = pathPath[i + 1];
+            Edge edge = getEdge(node, next);
+            weight += edge.getPath().getWeight();
+        }
+        return weight;
+    }
+
+    private Edge getEdge(Node from, Node to) {
+        for (Edge edge : graph.getEdges()) {
+            if (edge.getPath().getFrom().getId() == from.getId() || edge.getPath().getTo().getId() == from.getId()) {
+                if (edge.getEnd(from).getId() == to.getId()) {
+                    return edge;
+                }
+            }
+        }
+        return null;
+    }
+
 
     private void calcFinalPathRec(Node start, Node current,
                                   Cycle cycle, List<Cycle> open,
                                   List<Node> path, boolean cycleStart, int i) {
         if (!cycleStart && current.equals(start)) return;
         path.add(current);
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int j = 0; j < i; j++) {
+            stringBuilder.append(" ");
+        }
+        System.out.println(stringBuilder + "adding " + current + " from " + cycle.getId());
         for (Cycle next : open) {
-            if (next.isCircleNode(current)) {
+            if (next.isCycleNode(current)) {
                 open.remove(next);
                 next.sortStartingWith(current);
                 Node currentNext = next.edges().get(0).getEnd(current);
@@ -89,11 +149,33 @@ public class Runner {
         }
         i = i % cycle.edges().size();
         Node nextNode = cycle.edges().get(i).getEnd(current);
+        System.out.println(nextNode);
         i++;
         calcFinalPathRec(start, nextNode, cycle, open, path, false, i);
 
     }
 
+    private Pair<Cycle, Path> getShortestBridgeBetweenClusters(List<Cycle> open, List<Cycle> closed) {
+        Cycle best = null;
+        double weight = Double.MAX_VALUE;
+        Path path = null;
+        for (Cycle cycle : open) {
+            for (Cycle allocated : closed) {
+                for (Node node : allocated.getNodes()) {
+                    for (Node cycleNode : cycle.getNodes()) {
+                        DijkstraGraph dijkstraGraph = graph.getDijkstraGraph(node.getId());
+                        double weightCurrent = dijkstraGraph.getWeight(cycleNode);
+                        if (weightCurrent < weight) {
+                            weight = weightCurrent;
+                            best = cycle;
+                            path = dijkstraGraph.getShortestPath(cycleNode);
+                        }
+                    }
+                }
+            }
+        }
+        return Pair.of(best, path);
+    }
 
     private Path calcBridge() {
         Set<Node> set = new HashSet<>();
@@ -116,7 +198,7 @@ public class Runner {
         return graph.getShortestPath(0, min.getId());
     }
 
-    private double sumCircles() {
+    private double sumCycles() {
         double weight = 0;
         for (Cycle cycle : cycles) {
             weight += cycle.weight();
@@ -128,6 +210,7 @@ public class Runner {
     public String toString() {
         return "Runner{" +
                 "weight=" + calcWeight() +
+                ", bias=" + bias +
                 ", circles=" + cycles +
                 ", bridge=" + bridge +
                 '}';
