@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Runner {
     @Getter
@@ -69,21 +68,24 @@ public class Runner {
             }
         }
 
-        List<Cycle> copy = new CopyOnWriteArrayList<>(cycles);
+        List<Cycle> copy = new ArrayList<>(cycles);
+
+        List<Cycle> closedCycles = new ArrayList<>();
         copy.remove(firstCycle);
+        closedCycles.add(firstCycle);
         firstCycle.sortStartingWith(current);
-        calcFinalPathRec(current, current, firstCycle, copy, path, true, 0);
+        calcFinalPathRec(current, current, firstCycle, copy, closedCycles, path, true, 0);
+        copy.removeAll(closedCycles);
         while (!copy.isEmpty()) {
-            List<Cycle> closed = new CopyOnWriteArrayList<>(cycles);
-            closed.removeAll(copy);
-            Pair<Cycle, Path> pair = getShortestBridgeBetweenClusters(copy, closed);
+            Pair<Cycle, Path> pair = getShortestBridgeBetweenClusters(copy, closedCycles);
             Node start = pair.getRight().getTo();
             pair.getLeft().sortStartingWith(start);
             current = pair.getLeft().edges().get(0).getEnd(start);
             copy.remove(pair.getLeft());
+            closedCycles.add(pair.getLeft());
             List<Node> generatedPath = new ArrayList<>();
-            calcFinalPathRec(start, current, pair.getLeft(), copy, generatedPath, true, 1);
-
+            calcFinalPathRec(start, current, pair.getLeft(), copy, closedCycles, generatedPath, true, 1);
+            copy.removeAll(closedCycles);
             List<Node> list = new ArrayList<>();
             List<Node> bridgePath = Arrays.asList(pair.getRight().getPath());
             list.addAll(bridgePath);
@@ -131,6 +133,7 @@ public class Runner {
 
     private void calcFinalPathRec(Node start, Node current,
                                   Cycle cycle, List<Cycle> open,
+                                  List<Cycle> closed,
                                   List<Node> path, boolean cycleStart, int i) {
         if (!cycleStart && current.equals(start)) return;
         path.add(current);
@@ -138,20 +141,25 @@ public class Runner {
         for (int j = 0; j < i; j++) {
             stringBuilder.append(" ");
         }
-        System.out.println(stringBuilder + "adding " + current + " from " + cycle.getId());
+        // System.out.println(stringBuilder + "adding " + current + " from " + cycle.getId());
+
         for (Cycle next : open) {
-            if (next.isCycleNode(current)) {
-                open.remove(next);
-                next.sortStartingWith(current);
-                Node currentNext = next.edges().get(0).getEnd(current);
-                calcFinalPathRec(currentNext, currentNext, next, open, path, true, 1);
+            if (!closed.contains(next)) {
+                if (next.isCycleNode(current)) {
+                    //open.remove(next);
+                    closed.add(next);
+                    next.sortStartingWith(current);
+                    Node currentNext = next.edges().get(0).getEnd(current);
+                    // System.out.println("new recursion " + next.getId());
+                    calcFinalPathRec(currentNext, currentNext, next, open, closed, path, true, 1);
+                }
             }
         }
         i = i % cycle.edges().size();
         Node nextNode = cycle.edges().get(i).getEnd(current);
-        System.out.println(nextNode);
+        // System.out.println("nextNode: " + nextNode + " from " + cycle.getId());
         i++;
-        calcFinalPathRec(start, nextNode, cycle, open, path, false, i);
+        calcFinalPathRec(start, nextNode, cycle, open, closed, path, false, i);
 
     }
 
