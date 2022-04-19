@@ -4,16 +4,18 @@ import com.franosch.bwinf.muellabfuhr.io.FileReader;
 import com.franosch.bwinf.muellabfuhr.io.ResultFileWriter;
 import com.franosch.bwinf.muellabfuhr.model.Result;
 import com.franosch.bwinf.muellabfuhr.model.graph.Cycle;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Collections;
 import java.util.List;
 
+@RequiredArgsConstructor
 public class WeeklyScheduleGenerator {
-    private final static String TEST_RESOURCES = "muellabfuhr/src/test/resources/";
+    private final String path;
 
 
     public void findWeeklySchedule(int testCase) {
-        FileReader reader = new FileReader(testCase, TEST_RESOURCES);
+        FileReader reader = new FileReader(testCase, path);
         Solver solver = new Solver();
         solver.initGraph(reader);
         System.out.println(solver.findOddDegree().size());
@@ -31,7 +33,7 @@ public class WeeklyScheduleGenerator {
         System.out.println("---------");
         System.out.println("BEST RESULT");
         System.out.println("---------");
-        ResultFileWriter resultFileWriter = new ResultFileWriter(result);
+        ResultFileWriter resultFileWriter = new ResultFileWriter(result, testCase, path);
         resultFileWriter.writeFile();
     }
 

@@ -70,4 +70,24 @@ public class CalculatorTest {
         Assertions.assertEquals(4, result, 0.1);
     }
 
+    @Test
+    void cursedCalculatorTest() {
+        // 3 * 2 * 6 * 9 * 2 * 9 * 2 * 6 + 9 * 2 * 3 = 54 is false
+        Simplification[] simplifications = new Simplification[]{
+                new Simplification(Operation.ADDITION, 3),
+                new Simplification(Operation.MULTIPLICATION, 2),
+                new Simplification(Operation.MULTIPLICATION, 6),
+                new Simplification(Operation.MULTIPLICATION, 9),
+                new Simplification(Operation.MULTIPLICATION, 2),
+                new Simplification(Operation.MULTIPLICATION, 9),
+                new Simplification(Operation.MULTIPLICATION, 2),
+                new Simplification(Operation.MULTIPLICATION, 6),
+                new Simplification(Operation.ADDITION, 9),
+                new Simplification(Operation.MULTIPLICATION, 2),
+                new Simplification(Operation.MULTIPLICATION, 3),
+        };
+        double result = calculator.calculate(simplifications);
+        System.out.println(result);
+    }
+
 }

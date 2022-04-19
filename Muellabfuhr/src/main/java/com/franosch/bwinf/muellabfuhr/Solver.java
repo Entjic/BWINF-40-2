@@ -27,7 +27,8 @@ public class Solver {
         if (odds.size() != 0) {
             Graph completeGraph = completeGraph(odds);
             System.out.println("graph completed");
-            Set<Edge> min = findMinimalPerfectMatching(completeGraph);
+            // TODO: 17.04.2022 do for all not only root
+            Set<Edge> min = findMinimalPerfectMatching(completeGraph, 0);
             System.out.println("min" + min);
             double weight = 0;
             for (Edge edge : min) {
@@ -460,7 +461,7 @@ public class Solver {
     }
 
 
-    private Set<Edge> findMinimalPerfectMatching(Graph graph) {
+    private Set<Edge> findMinimalPerfectMatching(Graph graph, int start) {
         Node root = graph.getNodes().get(graph.getRoot().getId());
         Node current = root;
         Set<Integer> closed = new HashSet<>();

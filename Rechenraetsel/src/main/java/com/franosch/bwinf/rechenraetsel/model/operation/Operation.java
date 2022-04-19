@@ -52,7 +52,7 @@ public enum Operation {
 
 
     public static Operation getRandomExcept(Collection<Operation> operations) {
-        List<Operation> list = new ArrayList<>(List.of(ADDITION, ADDITION, SUBTRACTION, DIVISION, DIVISION, MULTIPLICATION, MULTIPLICATION));
+        List<Operation> list = new ArrayList<>(List.of(ADDITION, SUBTRACTION, DIVISION, MULTIPLICATION));
         list.removeAll(operations);
         int i = new Random().nextInt(0, list.size());
         return list.get(i);

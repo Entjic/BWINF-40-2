@@ -13,13 +13,14 @@ import java.io.PrintWriter;
 @RequiredArgsConstructor
 public class ResultFileWriter {
     private final Result result;
+    private final int testCase;
+    private final String path;
 
     private double worstWeight = 0;
 
     @SneakyThrows
     public void writeFile() {
-        String filePath = new File("").getAbsolutePath();
-        File file = new File(filePath.concat("/muellabfuhr/out/result.txt"));
+        File file = new File(path + "out/result" + testCase + ".txt");
         PrintWriter fileWriter = new PrintWriter(file);
         int i = 1;
         for (Runner runner : result.getRunners()) {

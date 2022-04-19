@@ -23,13 +23,15 @@ public class Main {
         setUpLogger(Level.OFF);
         long sum = 0;
         int amount = 10;
+        GeneratorV2 generatorV2 = new GeneratorV2();
         for (int i = 0; i < amount; i++) {
             long a = System.currentTimeMillis();
-            Riddle riddle = createMaster(12);
+            // Riddle riddle = createMaster(5);
+            generatorV2.generate();
             long b = System.currentTimeMillis();
             long seconds = b - a;
-            System.out.println("riddle: " + riddle.obfuscated());
-            System.out.println("solution: " + riddle);
+            // System.out.println("riddle: " + riddle.obfuscated());
+            // System.out.println("solution: " + riddle);
             sum += seconds;
         }
         System.out.println("average time per riddle " + (double) TimeUnit.MILLISECONDS.toSeconds(sum) / amount + "s");
@@ -40,6 +42,7 @@ public class Main {
         Solver solver = new Solver();
         SubSumChecker subSumChecker = new SubSumChecker();
         Calculator calculator = new Calculator();
+        if (calculator.calculate(false, convert(riddle.parts())) < 15) return false;
         Simplification[] simplifications = calculator.reduce(false, convert(riddle.parts()));
         if (subSumChecker.isSubSum(simplifications)) return false;
         return solver.solve(riddle).size() == 1;
