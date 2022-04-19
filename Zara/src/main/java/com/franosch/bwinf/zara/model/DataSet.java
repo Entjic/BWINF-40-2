@@ -4,7 +4,6 @@ package com.franosch.bwinf.zara.model;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -26,11 +25,20 @@ public class DataSet {
         }
     }
 
+    public DataSet(boolean allNull) {
+        content = new boolean[keyLength];
+    }
+
     @Override
     public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (boolean b : content) {
+            stringBuilder.append(b).append(",");
+        }
+        stringBuilder.deleteCharAt(stringBuilder.length() - 1);
         return "DataSet{" +
-                "content=" + Arrays.toString(content) +
-                ", id=" + id +
+                id + " " +
+                stringBuilder +
                 '}';
     }
 }

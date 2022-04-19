@@ -9,11 +9,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class Main {
 
     public static void main(String[] args) {
-        DataSet[] random = new DataSet[100];
+        int cards = 40;
+        int keys = 8;
+        DataSet[] random = new DataSet[cards];
         for (int i = 0; i < random.length; i++) {
             random[i] = new DataSet();
         }
-        DataSet[] key = new DataSet[2];
+        DataSet[] key = new DataSet[keys];
         List<DataSet> copy = new CopyOnWriteArrayList<>(Arrays.asList(random));
         for (int i = 0; i < key.length; i++) {
             DataSet dataSet = copy.get(new Random().nextInt(copy.size()));
@@ -27,7 +29,7 @@ public class Main {
         combined.add(master);
         Solver solver = new Solver();
         Set<DataSet> result = new HashSet<>();
-        solver.solve(combined, 0, 1, 3, result, new ArrayList<>());
+        solver.solve(combined, keys);
         System.out.println(result);
     }
 
