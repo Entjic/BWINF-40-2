@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 public class DataSet {
 
-    public static int keyLength = 128;
+    public static int keyLength =128;
 
     private static final AtomicInteger atomicInteger = new AtomicInteger();
     private final boolean[] content;

@@ -9,8 +9,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class Main {
 
     public static void main(String[] args) {
-        int cards = 40;
-        int keys = 8;
+        int cards = 30;
+        int keys = 10;
         DataSet[] random = new DataSet[cards];
         for (int i = 0; i < random.length; i++) {
             random[i] = new DataSet();
