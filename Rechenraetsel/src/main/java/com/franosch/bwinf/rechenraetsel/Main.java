@@ -20,7 +20,7 @@ public class Main {
 
     @SneakyThrows
     public static void main(String[] args) {
-        setUpLogger(Level.OFF);
+        setUpLogger(Level.ALL);
         long sum = 0;
         int amount = 10;
         GeneratorV2 generatorV2 = new GeneratorV2();
@@ -156,7 +156,7 @@ public class Main {
                 int a = map.getOrDefault(getEquationRepresentation(solutions), 0);
                 a++;
                 map.put(getEquationRepresentation(solutions), a);*/
-                strings.add(riddle + " " + getEquationRepresentation(solutions));
+                strings.add(riddle + " " + getEquationRepresentation(riddle, solutions));
             } catch (Exception e) {
                 error++;
                 continue;
@@ -174,29 +174,34 @@ public class Main {
         System.out.println(amount + " : valid " + valid + " / invalid " + invalid + " / error " + error);
     }
 
-    private static String getEquationRepresentation(Set<Operation[]> list) {
+    public static String getEquationRepresentation(Riddle riddle,Set<Operation[]> list) {
         StringBuilder stringBuilder = new StringBuilder();
-        for (Operation[] operations : list) {
-            stringBuilder.append(getEquationString(operations));
-            stringBuilder.append("=");
+        List<Operation[]> copy = new ArrayList<>(list);
+        if(copy.size() > 5){
+            copy = copy.subList(0, 5);
+        }
+        for (Operation[] operations : copy) {
+            stringBuilder.append(getEquationString(riddle, operations));
+            stringBuilder.append("\n");
         }
         return stringBuilder.substring(0, stringBuilder.length() - 1);
     }
 
-    private static String getEquationString(Operation[] operations) {
+    private static String getEquationString(Riddle riddle, Operation[] operations) {
         StringBuilder stringBuilder = new StringBuilder();
-        char[] chars = new char[]{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
-        int i = 0;
-        for (Operation operation : operations) {
+        int i = 1;
+        stringBuilder.append(riddle.parts()[0].digit().getAsInt()).append(" ");
+        for (Operation operation : Arrays.copyOfRange(operations, 1, operations.length)) {
             switch (operation) {
                 case ADDITION, NONE -> stringBuilder.append("+");
                 case SUBTRACTION -> stringBuilder.append("-");
                 case MULTIPLICATION -> stringBuilder.append("*");
                 case DIVISION -> stringBuilder.append(":");
             }
-            stringBuilder.append(chars[i]);
+            stringBuilder.append(" ").append(riddle.parts()[i].digit().getAsInt()).append(" ");
             i++;
         }
+        stringBuilder.append("= ").append(riddle.outcome());
         return stringBuilder.toString();
     }
 

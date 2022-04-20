@@ -48,12 +48,15 @@ public class Solver {
         }
         Set<DataSet> result = new HashSet<>();
         time = System.currentTimeMillis();
-        solve(dataSets, dataSets, 0, length / 2, length + 1, result, new ArrayList<>(), new DataSet(true));
+        int bitLength = dataSets.stream().findAny().get().getKeyLength();
+        System.out.println(length);
+        System.out.println(bitLength);
+        solve(dataSets, dataSets, 0, length / 2, length + 1, new ArrayList<>(), new DataSet(true, bitLength));
         System.out.println(result);
         return result;
     }
 
-    public void solve(Collection<DataSet> all, Collection<DataSet> dataSets, int recursionDepth, int maxRecursionDepth, int length, Set<DataSet> result, List<DataSet> chosen, DataSet bitsUsed) {
+    public void solve(Collection<DataSet> all, Collection<DataSet> dataSets, int recursionDepth, int maxRecursionDepth, int length, List<DataSet> chosen, DataSet bitsUsed) {
 //        boolean a = false;
 //        boolean b = false;
 //        boolean c = false;
@@ -90,9 +93,9 @@ public class Solver {
             List<DataSet> currentChosen = new ArrayList<>(chosen);
             currentChosen.addAll(List.of(sets));
             // System.out.println("current chosen " + Arrays.toString(currentChosen.stream().mapToInt(DataSet::getId).toArray()));
-            solve(all, copy, recursionDepth + 1, maxRecursionDepth, length, result, currentChosen, copyBitsUsed);
-            if(length - currentChosen.size() > 5) {
-                solve(all, one, recursionDepth + 1, maxRecursionDepth, length, result, currentChosen, copyBitsUsed);
+            solve(all, copy, recursionDepth + 1, maxRecursionDepth, length, currentChosen, copyBitsUsed);
+            if (length - currentChosen.size() > 5) {
+                solve(all, one, recursionDepth + 1, maxRecursionDepth, length, currentChosen, copyBitsUsed);
             }
         }
         List<DataSet[]> oneSets = calcSubsets(one.toArray(new DataSet[0]), 2);
@@ -102,9 +105,9 @@ public class Solver {
             // System.out.println("current chosen " + Arrays.toString(currentChosen.stream().mapToInt(DataSet::getId).toArray()));
             List<DataSet> copy = new ArrayList<>(one);
             copy.removeAll(List.of(oneSet));
-            solve(all, zero, recursionDepth + 1, maxRecursionDepth, length, result, currentChosen, copyBitsUsed);
-            if(length - chosen.size() > 5) {
-                solve(all, copy, recursionDepth + 1, maxRecursionDepth, length, result, currentChosen, copyBitsUsed);
+            solve(all, zero, recursionDepth + 1, maxRecursionDepth, length, currentChosen, copyBitsUsed);
+            if (length - chosen.size() > 5) {
+                solve(all, copy, recursionDepth + 1, maxRecursionDepth, length, currentChosen, copyBitsUsed);
             }
         }
 
@@ -154,7 +157,13 @@ public class Solver {
 
     public void solve2(Collection<DataSet> allDataSets, Collection<DataSet> chosen) {
         int index = 0;
-        DataSet xor = XOR(chosen);
+        DataSet xor;
+
+        if (chosen.size() == 0) {
+            xor = new DataSet(true, allDataSets.iterator().next().getKeyLength());
+        } else {
+            xor = XOR(chosen);
+        }
         for (boolean b : xor.getContent()) {
             if (!b) break;
             index++;
@@ -186,11 +195,11 @@ public class Solver {
 //        }
 //        System.out.println("chosen: "  + sb.toString());
         if (zero.isEmpty()) return;
-      //  System.out.println("filtered " + zero.size() + " one " + one.size());
+        //  System.out.println("filtered " + zero.size() + " one " + one.size());
         List<DataSet[]> fiveZeroSets = calcSubsets(zero.toArray(new DataSet[0]), 5);
-        DataSet chosenXOR = XOR(chosen);
+
         boolean[] s0, s1, s2, s3, s4;
-        boolean[] chosenXORArray = chosenXOR.getContent();
+        boolean[] chosenXORArray = xor.getContent();
         boolean found = false;
         int length = chosenXORArray.length;
         for (DataSet[] sets : fiveZeroSets) {
@@ -200,15 +209,15 @@ public class Solver {
             s3 = sets[3].getContent();
             s4 = sets[4].getContent();
 
-            for(int i = 0; i< length; i++){
-                if (s0[i]^s1[i]^s2[i]^s3[i]^s4[i]^chosenXORArray[i]){
+            for (int i = 0; i < length; i++) {
+                if (s0[i] ^ s1[i] ^ s2[i] ^ s3[i] ^ s4[i] ^ chosenXORArray[i]) {
                     break;
                 }
-                if(i  == length -1){
+                if (i == length - 1) {
                     found = true;
                 }
             }
-            if(found) {
+            if (found) {
                 printSolution(sets, chosen);
                 System.exit(0);
             }
@@ -240,20 +249,20 @@ public class Solver {
             s0 = oneSet[0].getContent();
             s1 = oneSet[1].getContent();
 
-            for(DataSet[] oneOutOfThreeZero : threeZeroSets) {
+            for (DataSet[] oneOutOfThreeZero : threeZeroSets) {
                 s2 = oneOutOfThreeZero[0].getContent();
                 s3 = oneOutOfThreeZero[1].getContent();
                 s4 = oneOutOfThreeZero[2].getContent();
-                for (int i = 0; i < length; i++){
+                for (int i = 0; i < length; i++) {
                     if (s0[i] ^ s1[i] ^ s2[i] ^ s3[i] ^ s4[i] ^ chosenXORArray[i]) {
                         break;
                     }
-                    if(i  == length -1){
+                    if (i == length - 1) {
                         found = true;
                     }
 
                 }
-                if(found){
+                if (found) {
                     printSolution(oneOutOfThreeZero, chosen);
                     System.out.println("also solution: " + oneSet);
                     System.exit(0);
@@ -279,17 +288,17 @@ public class Solver {
 //                    System.exit(0);
 //                }
 //            }
-            for(DataSet oneZeroSet : zero) {
+            for (DataSet oneZeroSet : zero) {
                 s4 = oneZeroSet.getContent();
-                for (int i = 0; i < length; i++){
+                for (int i = 0; i < length; i++) {
                     if (s0[i] ^ s1[i] ^ s2[i] ^ s3[i] ^ s4[i] ^ chosenXORArray[i]) {
-                         break;
+                        break;
                     }
-                    if(i  == length -1){
+                    if (i == length - 1) {
                         found = true;
                     }
                 }
-                if(found){
+                if (found) {
                     printSolution(oneFourSet, chosen);
                     System.out.println("also solution: " + oneZeroSet);
                     System.exit(0);
@@ -330,7 +339,7 @@ public class Solver {
     private boolean isEquals(Mastercard a, Mastercard b) {
         boolean[] dataSetA = a.getContent().getContent();
         boolean[] dataSetB = b.getContent().getContent();
-        for (int i = 0; i < DataSet.keyLength; i++) {
+        for (int i = 0; i < dataSetA.length; i++) {
             if (dataSetA[i] != dataSetB[i]) return false;
         }
         return true;

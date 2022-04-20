@@ -1,5 +1,6 @@
 package com.franosch.bwinf.zara;
 
+import com.franosch.bwinf.zara.io.FileReader;
 import com.franosch.bwinf.zara.model.DataSet;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -11,10 +12,24 @@ import java.util.Set;
 
 public class SolverTest {
     private static Solver solver;
+    public final static String TEST_RESOURCES = "src/test/resources/";
+    public static int keyLength = 128;
 
     @BeforeAll
     static void setUp() {
         solver = new Solver();
+    }
+
+    @Test
+    void playground() {
+        FileReader fileReader = new FileReader("stapel1", TEST_RESOURCES);
+        List<DataSet> dataSets = new ArrayList<>();
+
+        for (String s : fileReader.getContent().subList(1, fileReader.getContent().size())) {
+            DataSet dataSet = new DataSet(s);
+            dataSets.add(dataSet);
+        }
+        solver.solve(dataSets, Integer.parseInt(fileReader.getContent().get(0).split(" ")[1]));
     }
 
     @Test

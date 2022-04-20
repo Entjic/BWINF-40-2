@@ -52,6 +52,7 @@ public class GeneratorV2 {
         Simplification[] simplifications = out.stream().map(Simplification::convert).toArray(Simplification[]::new);
         //System.out.println(out);
         //System.out.println(Arrays.toString(simplifications));
+
         double applied = calculator.calculate(simplifications);
         Riddle riddle = new Riddle(out.toArray(Part[]::new), (int) applied);
         if (riddle.outcome() < 1) {
@@ -60,10 +61,14 @@ public class GeneratorV2 {
         Solver solver = new Solver();
         Set<Operation[]> operations = solver.solve(riddle);
         boolean valid = operations.size() == 1;
-        for (Operation[] operation : operations) {
-            // System.out.println(Arrays.toString(operation));
-        }
         System.out.println(riddle + " is " + valid);
+        if (!valid) {
+            System.out.println(operations.size());
+            System.out.println(Main.getEquationRepresentation(riddle, operations));
+        }
+        if(!valid){
+            return generate();
+        }
         return riddle;
     }
 
@@ -83,7 +88,7 @@ public class GeneratorV2 {
     private static List<Part> createFive(Digit last) {
         Digit a = Digit.getRandomExcept(Collections.singleton(last));
         Digit b = Digit.getRandomExcept(Collections.singleton(a));
-        Digit c = Digit.getRandomExcept(Arrays.asList(a,b));
+        Digit c = findC(a, b);
         Digit d = Digit.getRandomExcept(Collections.singleton(a));
         List<Operation> operations = List.of(Operation.ADDITION, Operation.MULTIPLICATION, Operation.MULTIPLICATION, Operation.DIVISION, Operation.MULTIPLICATION);
         List<Digit> digits = List.of(a, b, c, a, d);
@@ -93,6 +98,13 @@ public class GeneratorV2 {
             parts.add(part);
         }
         return parts;
+    }
+
+    private static Digit findC(Digit a, Digit b) {
+        while (true) {
+            Digit c = Digit.getRandomExcept(Arrays.asList(a, b));
+            if (c.getAsInt() % a.getAsInt() != 0) return c;
+        }
     }
 
     private static Riddle create(int... ints) {

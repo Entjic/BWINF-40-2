@@ -15,15 +15,16 @@ public class Mastercard {
     }
 
     private DataSet generate(DataSet[] dataSets) {
-        boolean[] content = new boolean[DataSet.keyLength];
-        for (int i = 0; i < DataSet.keyLength; i++) {
+        int length = dataSets[0].getKeyLength();
+        boolean[] content = new boolean[length];
+        for (int i = 0; i < length; i++) {
             boolean c = false;
             for (DataSet dataSet : dataSets) {
                 c = dataSet.getContent()[i] ^ c;
             }
             content[i] = c;
         }
-        return new DataSet(content);
+        return new DataSet(content, length);
     }
 
     @Override
