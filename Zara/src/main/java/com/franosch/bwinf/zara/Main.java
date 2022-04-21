@@ -1,6 +1,5 @@
 package com.franosch.bwinf.zara;
 
-import com.franosch.bwinf.zara.io.FileReader;
 import com.franosch.bwinf.zara.model.DataSet;
 import com.franosch.bwinf.zara.model.Mastercard;
 
@@ -10,7 +9,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class Main {
 
     public static void main(String[] args) {
-        int cards = 30;
+        int cards = 60;
         int keys = 10;
         DataSet[] random = new DataSet[cards];
         for (int i = 0; i < random.length; i++) {
@@ -32,10 +31,6 @@ public class Main {
         Set<DataSet> result = new HashSet<>();
         solver.solve(combined, keys);
         System.out.println(result);
-    }
-
-    private static Set<DataSet> readDataSets(){
-        return new HashSet<>();
     }
 
 }

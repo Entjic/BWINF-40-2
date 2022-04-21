@@ -56,7 +56,9 @@ public class DataSet {
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
         for (boolean b : content) {
-            stringBuilder.append(b).append(",");
+            String s = "0";
+            if(b) s = "1";
+            stringBuilder.append(s).append(",");
         }
         stringBuilder.deleteCharAt(stringBuilder.length() - 1);
         return "DataSet{" +

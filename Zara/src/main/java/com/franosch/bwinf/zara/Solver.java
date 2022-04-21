@@ -6,6 +6,7 @@ import com.franosch.bwinf.zara.model.Mastercard;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Solver {
 
@@ -51,7 +52,7 @@ public class Solver {
         int bitLength = dataSets.stream().findAny().get().getKeyLength();
         System.out.println(length);
         System.out.println(bitLength);
-        solve(dataSets, dataSets, 0, length / 2, length + 1, new ArrayList<>(), new DataSet(true, bitLength));
+        solve(dataSets, dataSets, 0, 2, length + 1, new ArrayList<>(), new DataSet(true, bitLength));
         System.out.println(result);
         return result;
     }
@@ -71,7 +72,7 @@ public class Solver {
 //            System.out.println("here");
 //        }
         if (length - chosen.size() <= 5 || dataSets.size() <= 1 || recursionDepth == maxRecursionDepth) {
-            solve2(all, chosen);
+            solve3(all, chosen);
             return;
         }
 
@@ -84,8 +85,8 @@ public class Solver {
         List<DataSet> one = new ArrayList<>(sorted);
         one.removeAll(zero);
 
-        List<DataSet[]> subSet = calcSubsets(zero.toArray(new DataSet[0]), 2);
-        for (DataSet[] sets : subSet) {
+        List<DataSet[]> zeroSubSets = calcSubsets(zero.toArray(new DataSet[0]), 2);
+        for (DataSet[] sets : zeroSubSets) {
             List<DataSet> copy = new ArrayList<>(zero);
             for (DataSet dataSet : sets) {
                 copy.remove(dataSet);
@@ -94,23 +95,185 @@ public class Solver {
             currentChosen.addAll(List.of(sets));
             // System.out.println("current chosen " + Arrays.toString(currentChosen.stream().mapToInt(DataSet::getId).toArray()));
             solve(all, copy, recursionDepth + 1, maxRecursionDepth, length, currentChosen, copyBitsUsed);
-            if (length - currentChosen.size() > 5) {
-                solve(all, one, recursionDepth + 1, maxRecursionDepth, length, currentChosen, copyBitsUsed);
-            }
+
         }
         List<DataSet[]> oneSets = calcSubsets(one.toArray(new DataSet[0]), 2);
         for (DataSet[] oneSet : oneSets) {
             List<DataSet> currentChosen = new ArrayList<>(chosen);
             currentChosen.addAll(List.of(oneSet));
             // System.out.println("current chosen " + Arrays.toString(currentChosen.stream().mapToInt(DataSet::getId).toArray()));
-            List<DataSet> copy = new ArrayList<>(one);
-            copy.removeAll(List.of(oneSet));
+
             solve(all, zero, recursionDepth + 1, maxRecursionDepth, length, currentChosen, copyBitsUsed);
-            if (length - chosen.size() > 5) {
-                solve(all, copy, recursionDepth + 1, maxRecursionDepth, length, currentChosen, copyBitsUsed);
-            }
+
         }
 
+    }
+
+    public void solve3(Collection<DataSet> all, Collection<DataSet> chosen) {
+        int index = -1;
+        DataSet xor;
+
+        if (chosen.size() == 0) {
+            xor = new DataSet(true, all.iterator().next().getKeyLength());
+        } else {
+            xor = XOR(chosen);
+        }
+
+
+        index = getIndex(xor, index);
+        List<DataSet> sorted = sort(all, index);
+        sorted.removeAll(chosen);
+
+
+        checkForSolution(chosen, index, xor, sorted);
+    }
+
+    private void checkForSolution(Collection<DataSet> chosen, int index, DataSet xor, List<DataSet> dataSets) {
+        index = getIndex(xor, index);
+        List<DataSet> sorted = sort(dataSets, index);
+        List<DataSet> zero = getZeros(dataSets, index);
+        List<DataSet> one = new ArrayList<>(sorted);
+        one.removeAll(zero);
+        for (int i = 0; i < 11 - chosen.size() && 11 - chosen.size() - i >= 0; i += 2) {
+            testForSolution(zero, 11 - chosen.size() - i, one, i, xor, chosen, 0, index);
+        }
+    }
+
+    private void testForSolution(List<DataSet> zero, int zeros, List<DataSet> one, int ones, DataSet xor, Collection<DataSet> chosen, int recursionDepth, int index) {
+
+        if (zero.size() >= zeros && one.size() >= ones) {
+
+            if (recursionDepth <= 1) {
+              //     List<DataSet[]> zeroSubSets = calcSubsets(zero.toArray(new DataSet[0]), zeros);
+
+              //  System.out.println("chosen " + chosen.stream().map(x -> x.getId()).collect(Collectors.toList()));
+             //List<DataSet[]> oneSubSets = calcSubsets(one.toArray(new DataSet[0]), ones);
+                List<DataSet[]> oneSubSets = generateSubsets(chosen, index, xor, one, ones);
+               // List<DataSet[]> zeroSubSets = calcSubsets(zero.toArray(new DataSet[0]), zeros);
+                List<DataSet[]> zeroSubSets = generateSubsets(chosen, index, xor, zero, zeros);
+                checkSolution(zeros, ones, xor, chosen, zeroSubSets, oneSubSets);
+                return;
+            }
+        }
+    }
+
+    private List<DataSet[]> generateSubsets(List<DataSet> zero, int zeros, int recursionDepth, int index) {
+        List<DataSet[]> zeroSubSets = calcSubsets(zero.toArray(new DataSet[0]), zeros);
+
+        // return calcSubsetsRecursion(zeroSubSets, oneSubSets);
+        return zeroSubSets;
+    }
+
+    private List<DataSet[]> generateSubsets(Collection<DataSet> chosen, int index, DataSet xor, List<DataSet> dataSets, int num) {
+        if(num == 0){
+            return new ArrayList<DataSet[]>();
+        }
+        if(dataSets.size() < 2*num || num == 1){
+            return calcSubsets(dataSets.toArray(new DataSet[0]), num);
+        }
+        index = getIndex(xor, index);
+        List<DataSet> sorted = sort(dataSets, index);
+        List<DataSet> zero = getZeros(dataSets, index);
+        List<DataSet> one = new ArrayList<>(sorted);
+        one.removeAll(zero);
+        List<DataSet[]> generated = new ArrayList<>();
+
+            for (int i = 0; i < num; i += 2) {
+                generated.addAll(generateSubsetsRecursion(chosen, index, xor, zero, num - i, one, i, 1));
+            }
+
+        for(DataSet[] sets : generated){
+            for(DataSet x : sets){
+                if(x.getId() == 2){
+           //         System.out.println("found");
+                }
+            }
+
+        }
+        return generated;
+    }
+
+    private List<DataSet[]> generateSubsetsRecursion(Collection<DataSet> chosen, int index, DataSet xor, List<DataSet> zero, int numZero, List<DataSet> one, int numOne, int rekursionDepth) {
+        List<DataSet[]> zeroSubSets = calcSubsets(zero.toArray(new DataSet[0]), numZero);
+        //List<DataSet[]> zeroSubSets = generateSubsets(chosen, index, xor, zero, numZero);
+        List<DataSet[]> oneSubSets = calcSubsets(one.toArray(new DataSet[0]), numOne);
+        //List<DataSet[]> oneSubSets = generateSubsets(chosen, index, xor, one, numOne);
+        List<DataSet[]> combined = calcSubsetsRecursion(zeroSubSets, oneSubSets);
+        return combined;
+    }
+
+
+    private List<DataSet[]> calcSubsetsRecursion(List<DataSet[]> zero, List<DataSet[]> one) {
+        List<DataSet[]> set = new ArrayList<>();
+        int i = 0;
+        for (DataSet[] z : zero) {
+            for (DataSet[] o : one) {
+                DataSet[] s = new DataSet[z.length + o.length];
+                i=0;
+                for (DataSet z1 : z) {
+                    s[i] = z1;
+                    i++;
+                }
+                for (DataSet o1 : o) {
+                    s[i] = o1;
+                    i++;
+                }
+
+                set.add(s);
+            }
+        }
+        return set;
+    }
+
+
+    private void checkSolution(int zeros, int ones, DataSet xor, Collection<DataSet> chosen, List<DataSet[]> zeroSubSets, List<DataSet[]> oneSubSets) {
+        for (DataSet[] dataSets : zeroSubSets) {
+            for (DataSet[] sets : oneSubSets) {
+                if (isResult(xor, dataSets, sets)) {
+                    printSolution(chosen, dataSets, sets);
+                    System.out.println(zeros + " " + ones);
+                    System.exit(0);
+                }
+            }
+        }
+    }
+
+
+    private boolean isResult(DataSet chosenXOR, DataSet[]... subSets) {
+        int length = 0;
+        for (DataSet[] subSet : subSets) {
+            length += subSet.length;
+        }
+        boolean[][] booleans = new boolean[length + 1][];
+        int i = 0;
+        for (DataSet[] subSet : subSets) {
+            for (DataSet dataSet : subSet) {
+                booleans[i] = dataSet.getContent();
+                i++;
+            }
+        }
+        booleans[i] = chosenXOR.getContent();
+        return isResult(booleans);
+    }
+
+    private boolean isResult(boolean[]... cards) {
+        for (int i = 0; i < cards[0].length; i++) {
+            boolean c = false;
+            for (int j = 0, cardsLength = cards.length; j < cardsLength; j++) {
+                boolean[] card = cards[j];
+                c = c ^ card[i];
+            }
+            if (c) return false;
+        }
+        return true;
+    }
+
+    private int getIndex(DataSet xor, int index) {
+        boolean[] bools = xor.getContent();
+        for (int i = index + 1; i < xor.getKeyLength(); i++) {
+            if (!bools[i]) return i;
+        }
+        return 0;
     }
 
     private int getNextCandidate(Collection<DataSet> all, int max) {
@@ -164,36 +327,12 @@ public class Solver {
         } else {
             xor = XOR(chosen);
         }
-        for (boolean b : xor.getContent()) {
-            if (!b) break;
-            index++;
-        }
+        index = getIndex(xor, index);
         List<DataSet> sorted = sort(allDataSets, index);
         List<DataSet> zero = getZeros(sorted, index);
         List<DataSet> one = new ArrayList<>(sorted);
         one.removeAll(zero);
-//        List<DataSet> filtered = new ArrayList<>();
-//        boolean[] content = xor.getContent();
-//        for (DataSet dataSet : zero) {
-//            boolean b = false;
-//            for (int j = 0; j < content.length; j++) {
-//                if (!content[j]) {
-//                    if (dataSet.getContent()[j]) {
-//                        b = true;
-//                        break;
-//                    }
-//                }
-//            }
-//            if (!b) {
-//                filtered.add(dataSet);
-//            }
-//        }
-//        StringBuilder sb = new StringBuilder();
-//        sb.append("chosen ");
-//        for(DataSet s : chosen){
-//            sb.append(s.getId()).append(" ");
-//        }
-//        System.out.println("chosen: "  + sb.toString());
+
         if (zero.isEmpty()) return;
         //  System.out.println("filtered " + zero.size() + " one " + one.size());
         List<DataSet[]> fiveZeroSets = calcSubsets(zero.toArray(new DataSet[0]), 5);
@@ -222,30 +361,11 @@ public class Solver {
                 System.exit(0);
             }
         }
-//            Collection<DataSet> collection = new ArrayList<>(List.of(sets));
-//            collection.add(chosenXOR);
-//            DataSet current = XOR(collection);
-//            if (isResult(current)) {
-//                printSolution(sets, chosen);
-//                System.exit(0);
-//            }
 
         List<DataSet[]> threeZeroSets = calcSubsets(zero.toArray(new DataSet[0]), 3);
         List<DataSet[]> oneSets = calcSubsets(one.toArray(new DataSet[0]), 2);
         for (DataSet[] oneSet : oneSets) {
-//            DataSet xorSetOne = XOR(oneSet);
-//            DataSet xorSetOneChosen = XOR(xorSetOne, chosenXOR);
-//            for (int j = 0, threeZeroSetsSize = threeZeroSets.size(); j < threeZeroSetsSize; j++) {
-//                DataSet[] threeZeroSet = threeZeroSets.get(j);
-//                DataSet xorThree = XOR(threeZeroSet);
-//                DataSet combined = XOR(xorSetOneChosen, xorThree);
-//                if (isResult(combined)) {
-//                    System.out.println("lösungsausgabe kaputt");
-//                    printSolution(oneSet, chosen);
-//                    System.exit(0);
-//
-//                }
-//            }
+
             s0 = oneSet[0].getContent();
             s1 = oneSet[1].getContent();
 
@@ -264,7 +384,7 @@ public class Solver {
                 }
                 if (found) {
                     printSolution(oneOutOfThreeZero, chosen);
-                    System.out.println("also solution: " + oneSet);
+                    System.out.println("also solution: " + Arrays.toString(oneSet));
                     System.exit(0);
                 }
             }
@@ -277,17 +397,7 @@ public class Solver {
             s1 = oneFourSet[1].getContent();
             s2 = oneFourSet[2].getContent();
             s3 = oneFourSet[3].getContent();
-//            DataSet sdfdfhsdfg = XOR(sets);
-//            DataSet dvbnsdergcfg = XOR(sdfdfhsdfg, chosenXOR);
-//
-//            for (DataSet dataSet : zero) {
-//                DataSet xcvbdf = XOR(dvbnsdergcfg, dataSet);
-//                if (isResult(xcvbdf)) {
-//                    chosen.add(dataSet);
-//                    printSolution(sets, chosen);
-//                    System.exit(0);
-//                }
-//            }
+
             for (DataSet oneZeroSet : zero) {
                 s4 = oneZeroSet.getContent();
                 for (int i = 0; i < length; i++) {
@@ -331,6 +441,22 @@ public class Solver {
         for (DataSet dataSet : chosen) {
             System.out.println(dataSet);
         }
+        long dif = System.currentTimeMillis() - time;
+        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+        System.out.println("required time " + dateFormat.format(dif));
+    }
+
+    private void printSolution(Collection<DataSet> chosen, DataSet[]... set) {
+        System.out.println("SOLUTION");
+        for (DataSet[] dataSets : set) {
+            for (DataSet dataSet : dataSets) {
+                System.out.println(dataSet);
+            }
+        }
+        for (DataSet dataSet : chosen) {
+            System.out.println(dataSet);
+        }
+
         long dif = System.currentTimeMillis() - time;
         DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
         System.out.println("required time " + dateFormat.format(dif));
