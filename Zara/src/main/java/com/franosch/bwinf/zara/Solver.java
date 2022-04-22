@@ -6,6 +6,7 @@ import com.franosch.bwinf.zara.model.Mastercard;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Solver {
 
@@ -50,9 +51,11 @@ public class Solver {
         }
         Set<DataSet> result = new HashSet<>();
         time = System.currentTimeMillis();
+        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
         int bitLength = dataSets.stream().findAny().get().getKeyLength();
         System.out.println(length);
         System.out.println(bitLength);
+        System.out.println(dateFormat.format(time));
         solve(dataSets, dataSets, 0, 2, length + 1, new ArrayList<>(), new DataSet(true, bitLength));
         System.out.println(result);
         return result;
@@ -74,26 +77,32 @@ public class Solver {
         List<DataSet> zero = getZeros(sorted, index);
         List<DataSet> one = new ArrayList<>(sorted);
         one.removeAll(zero);
+        final int max = (int) (binomial(zero.size(), 4) + binomial(one.size(), 4)) / 10;
+        final List<Integer> list = List.of(max, 2 * max, 3 * max, 4 * max, 5 * max, 6 * max, 7 * max, 8 * max, 9 * max, 10 * max);
+        System.out.println(list);
+        AtomicInteger counter = new AtomicInteger();
+        AtomicInteger progress = new AtomicInteger();
+
         Collection<DataSet[]> zeroFourSubSets = calcSubsets(zero.toArray(DataSet[]::new), 4);
         for (Collection<DataSet[]> sets : split(zeroFourSubSets)) {
             new Thread(() -> {
                 for (DataSet[] zeroFourSubSet : sets) {
-                    if (Arrays.stream(zeroFourSubSet).allMatch(dataSet ->
-                            List.of(4, 6, 7, 11, 24, 30, 31, 36, 37, 39, 40).contains(dataSet.getId()))) {
-                        System.out.println("Thread 0 " + Arrays.toString(zeroFourSubSet));
+                    int current = counter.incrementAndGet();
+                    if (list.contains(current)) {
+                        System.out.println(progress.incrementAndGet() * 10 + "%");
                     }
                     solve3(all, List.of(zeroFourSubSet));
                 }
             }).start();
         }
 
-        Collection<DataSet[]> oneFourSubSets = calcSubsets(zero.toArray(DataSet[]::new), 4);
+        Collection<DataSet[]> oneFourSubSets = calcSubsets(one.toArray(DataSet[]::new), 4);
         for (Collection<DataSet[]> sets : split(oneFourSubSets)) {
             new Thread(() -> {
                 for (DataSet[] oneFourSubSet : sets) {
-                    if (Arrays.stream(oneFourSubSet).allMatch(dataSet ->
-                            List.of(4, 6, 7, 11, 24, 30, 31, 36, 37, 39, 40).contains(dataSet.getId()))) {
-                        System.out.println("Thread 1 " + Arrays.toString(oneFourSubSet));
+                    int current = counter.incrementAndGet();
+                    if (list.contains(current)) {
+                        System.out.println(progress.incrementAndGet() * 10 + "%");
                     }
                     solve3(all, List.of(oneFourSubSet));
                 }
@@ -191,8 +200,6 @@ public class Solver {
             List<DataSet[]> subSets = calcSubsets(one.toArray(DataSet[]::new), ones);
             //  System.out.println("chosen " + chosen.stream().map(x -> x.getId()).collect(Collectors.toList()));
             //List<DataSet[]> oneSubSets = calcSubsets(one.toArray(new DataSet[0]), ones);
-            long kZero = binomial(zero.size(), zeros);
-            long kOne = binomial(one.size(), ones);
             // TODO: 22.04.2022 use binomial coefficient
             index = getIndex(xor, index);
             List<List<DataSet[]>> list = split(subSets, index);
@@ -251,11 +258,13 @@ public class Solver {
         return out;
     }
 
-    private long binomial(int n, int k) {
-        if ((n == k) || (k == 0))
-            return 1;
-        else
-            return binomial(n - 1, k) + binomial(n - 1, k - 1);
+    private static long binomial(int n, int k) {
+        if (k > n - k)
+            k = n - k;
+        long b = 1;
+        for (int i = 1, m = n; i <= k; i++, m--)
+            b = b * m / i;
+        return b;
     }
 
 

@@ -12,7 +12,7 @@ public class Main {
 
 
     public static void main(String[] args) {
-        run();
+        random();
     }
 
     private static void run() {
@@ -34,7 +34,7 @@ public class Main {
     }
 
     private static void random() {
-        int cards = 60;
+        int cards = 50;
         int keys = 10;
         DataSet[] random = new DataSet[cards];
         for (int i = 0; i < random.length; i++) {
