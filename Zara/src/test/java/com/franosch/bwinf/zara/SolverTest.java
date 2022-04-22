@@ -59,7 +59,7 @@ public class SolverTest {
         List<DataSet> dataSets = new ArrayList<>();
 
         for (String s : fileReader.getContent().subList(1, fileReader.getContent().size())) {
-            if(s.startsWith("#")){
+            if (s.startsWith("#")) {
                 continue;
             }
             DataSet dataSet = new DataSet(s);
@@ -69,6 +69,24 @@ public class SolverTest {
         Set<DataSet> result = solver.solve(dataSets, length);
         Assertions.assertEquals(length + 1, result.size());
 
+    }
+
+    @Test
+    void playground13() {
+        // 11 -> 11, 2, 16, 23, 7, 8, 19, 35, 37, 32, 40
+        FileReader fileReader = new FileReader("stapel13", TEST_RESOURCES);
+        List<DataSet> dataSets = new ArrayList<>();
+
+        for (String s : fileReader.getContent().subList(1, fileReader.getContent().size())) {
+            if (s.startsWith("#")) {
+                continue;
+            }
+            DataSet dataSet = new DataSet(s);
+            dataSets.add(dataSet);
+        }
+        int length = Integer.parseInt(fileReader.getContent().get(0).split(" ")[1]);
+        Set<DataSet> result = solver.solve(dataSets, length);
+        Assertions.assertEquals(length + 1, result.size());
     }
 
     @Test

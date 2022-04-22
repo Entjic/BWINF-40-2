@@ -31,7 +31,7 @@ public class Mastercard {
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
         for (DataSet dataSet : dataSets) {
-            stringBuilder.append("\n").append(dataSet.getId()).append(" content").append(Arrays.toString(dataSet.getContent()));
+            stringBuilder.append("\n").append(dataSet);
         }
         stringBuilder.append("\n").append("xor ").append(content);
         return "Mastercard{" +

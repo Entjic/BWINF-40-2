@@ -58,12 +58,9 @@ public class DataSet {
         for (boolean b : content) {
             String s = "0";
             if(b) s = "1";
-            stringBuilder.append(s).append(",");
+            stringBuilder.append(s);
         }
-        stringBuilder.deleteCharAt(stringBuilder.length() - 1);
-        return "DataSet{" +
-                id + " " +
-                stringBuilder +
-                '}';
+        return id + " " +
+                stringBuilder;
     }
 }
