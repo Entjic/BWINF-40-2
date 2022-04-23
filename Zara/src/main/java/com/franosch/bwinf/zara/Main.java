@@ -16,7 +16,7 @@ public class Main {
     public static void main(String[] args) {
         String path;
         String name;
-        boolean test = false;
+        boolean test = true;
         if (!test) {
             for (String arg : args) {
                 System.out.println(arg);
@@ -26,14 +26,14 @@ public class Main {
             System.out.println(pre);
             path = pre + "rsc/";
         } else {
-            name = "stapel2";
+            name = "stapel14";
             path = TEST_RESOURCES;
         }
         run(name, path);
     }
 
     private static void run(String name, String path) {
-        Solver solver = new Solver();
+
 
         // 11 -> 1, 4, 7, 10, 11, 13, 16, 21, 24, 25, 41
         FileReader fileReader = new FileReader(name, path);
@@ -47,11 +47,12 @@ public class Main {
             dataSets.add(dataSet);
         }
         int length = Integer.parseInt(fileReader.getContent().get(0).split(" ")[1]);
-        solver.solve(dataSets, length);
+        Solver solver = new Solver(length);
+        solver.solve(dataSets);
     }
 
     private static void random() {
-        int cards = 50;
+        int cards = 40;
         int keys = 10;
         DataSet[] random = new DataSet[cards];
         for (int i = 0; i < random.length; i++) {
@@ -64,7 +65,7 @@ public class Main {
             copy.remove(dataSet);
             key[i] = dataSet;
         }
-        Solver solver = new Solver();
+        Solver solver = new Solver(keys);
         Mastercard mastercard = new Mastercard(key);
         System.out.println(mastercard);
         DataSet master = mastercard.getContent();
@@ -72,8 +73,7 @@ public class Main {
         combined.add(master);
         Set<DataSet> result = new HashSet<>();
 
-
-        solver.solve(combined, keys);
+        solver.solve(combined);
         System.out.println(result);
     }
 

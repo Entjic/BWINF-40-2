@@ -2,15 +2,18 @@ package com.franosch.bwinf.zara;
 
 import com.franosch.bwinf.zara.model.DataSet;
 import com.franosch.bwinf.zara.model.Mastercard;
+import lombok.RequiredArgsConstructor;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@RequiredArgsConstructor
 public class Solver {
-
+    private final int keys;
     private long time;
+    private final List<DataSet[]> empty = new ArrayList<>();
 
     public List<DataSet[]> calcSubsets(DataSet[] superSet, int k) {
         List<DataSet[]> solutions = new ArrayList<>();
@@ -45,7 +48,7 @@ public class Solver {
         return list;
     }
 
-    public Set<DataSet> solve(Collection<DataSet> dataSets, int length) {
+    public Set<DataSet> solve(Collection<DataSet> dataSets) {
         for (DataSet dataSet : dataSets) {
             System.out.println(dataSet);
         }
@@ -53,10 +56,10 @@ public class Solver {
         time = System.currentTimeMillis();
         DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
         int bitLength = dataSets.stream().findAny().get().getKeyLength();
-        System.out.println(length);
+        System.out.println(keys);
         System.out.println(bitLength);
         System.out.println(dateFormat.format(time));
-        solve(dataSets, dataSets, 0, 2, length + 1, new ArrayList<>(), new DataSet(true, bitLength));
+        solve(dataSets, dataSets, 0, 2, keys + 1, new ArrayList<>(), new DataSet(true, bitLength));
         System.out.println(result);
         return result;
     }
@@ -187,6 +190,7 @@ public class Solver {
         List<DataSet> one = new ArrayList<>(sorted);
         one.removeAll(zero);
 
+
         for (int i = 0; i < 11 - chosen.size() && 11 - chosen.size() - i >= 0; i += 2) {
             testForSolution(zero, 11 - chosen.size() - i, one, i, xor, chosen, index);
         }
@@ -196,15 +200,20 @@ public class Solver {
 
         if (zero.size() >= zeros && one.size() >= ones) {
 
-            //     List<DataSet[]> zeroSubSets = calcSubsets(zero.toArray(new DataSet[0]), zeros);
-            List<DataSet[]> subSets = calcSubsets(one.toArray(DataSet[]::new), ones);
-            //  System.out.println("chosen " + chosen.stream().map(x -> x.getId()).collect(Collectors.toList()));
-            //List<DataSet[]> oneSubSets = calcSubsets(one.toArray(new DataSet[0]), ones);
+            List<DataSet[]> subSets;
             // TODO: 22.04.2022 use binomial coefficient
             index = getIndex(xor, index);
-            List<List<DataSet[]>> list = split(subSets, index);
-            List<DataSet[]> indexModZero = list.get(0);
-            List<DataSet[]> indexModOne = list.get(1);
+            List<List<DataSet[]>> list;
+            List<DataSet[]> indexModZero;
+            List<DataSet[]> indexModOne;
+            if (this.keys + 1 - zeros <= 4) {
+                checkForLength(zero, zeros, 0, xor, chosen, index, empty, empty);
+                return;
+            }
+            subSets = calcSubsets(one.toArray(DataSet[]::new), ones);
+            list = split(subSets, index);
+            indexModZero = list.get(0);
+            indexModOne = list.get(1);
             checkForLength(zero, zeros, ones, xor, chosen, index, indexModZero, indexModOne);
 
         }
