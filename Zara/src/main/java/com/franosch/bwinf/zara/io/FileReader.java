@@ -18,8 +18,7 @@ public class FileReader {
     }
 
     private List<String> readFile(String filename, String resourceDirectory) {
-        String current = new File("").getAbsolutePath();
-        File file = new File(current + "/" + resourceDirectory + filename + ".txt");
+        File file = new File( resourceDirectory + filename + ".txt");
         List<String> list = new ArrayList<>();
         try {
             Scanner scanner = new Scanner(file);

@@ -14,16 +14,26 @@ public class Main {
             System.exit(-1);
         }
         String path = "";
-        if (args.length > 1) {
-            System.out.println("Nutze Testresourcen");
-            path = "muellabfuhr/src/test/resources/";
-        } else {
+        int nr = 0, runner = 5;
+        if (args.length == 1) {
             String pre = getCurrentPath();
             System.out.println(pre);
             path = pre + "resources/";
+            nr = Integer.parseInt(args[0]);
         }
-        int nr = Integer.parseInt(args[0]);
-        WeeklyScheduleGenerator weeklyScheduleGenerator = new WeeklyScheduleGenerator(path);
+        if (args.length == 2) {
+            String pre = getCurrentPath();
+            System.out.println(pre);
+            path = pre + "resources/";
+            nr = Integer.parseInt(args[0]);
+            runner = Integer.parseInt(args[1]);
+        }
+        if (args.length > 2) {
+            System.out.println("Nutze interne Testresourcen");
+            path = "muellabfuhr/src/test/resources/";
+            nr = 8;
+        }
+        WeeklyScheduleGenerator weeklyScheduleGenerator = new WeeklyScheduleGenerator(runner, path);
         weeklyScheduleGenerator.findWeeklySchedule(nr);
 
     }

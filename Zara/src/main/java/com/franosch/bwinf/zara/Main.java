@@ -3,7 +3,9 @@ package com.franosch.bwinf.zara;
 import com.franosch.bwinf.zara.io.FileReader;
 import com.franosch.bwinf.zara.model.DataSet;
 import com.franosch.bwinf.zara.model.Mastercard;
+import lombok.SneakyThrows;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -12,14 +14,29 @@ public class Main {
 
 
     public static void main(String[] args) {
-        random();
+        String path;
+        String name;
+        boolean test = false;
+        if (!test) {
+            for (String arg : args) {
+                System.out.println(arg);
+            }
+            name = args[0];
+            String pre = getCurrentPath();
+            System.out.println(pre);
+            path = pre + "rsc/";
+        } else {
+            name = "stapel2";
+            path = TEST_RESOURCES;
+        }
+        run(name, path);
     }
 
-    private static void run() {
+    private static void run(String name, String path) {
         Solver solver = new Solver();
 
         // 11 -> 1, 4, 7, 10, 11, 13, 16, 21, 24, 25, 41
-        FileReader fileReader = new FileReader("stapel14", TEST_RESOURCES);
+        FileReader fileReader = new FileReader(name, path);
         List<DataSet> dataSets = new ArrayList<>();
 
         for (String s : fileReader.getContent().subList(1, fileReader.getContent().size())) {
@@ -58,6 +75,18 @@ public class Main {
 
         solver.solve(combined, keys);
         System.out.println(result);
+    }
+
+    @SneakyThrows
+    private static String getCurrentPath() {
+        String path = new File(Main.class.getProtectionDomain().getCodeSource().getLocation()
+                .toURI()).getPath();
+        String[] splits = path.split("[/\\\\]");
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < splits.length - 1; i++) {
+            stringBuilder.append(splits[i]).append("/");
+        }
+        return stringBuilder.toString();
     }
 
 }

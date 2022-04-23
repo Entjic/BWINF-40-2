@@ -28,7 +28,7 @@ public class Solver {
             Graph completeGraph = completeGraph(odds);
             System.out.println("graph completed");
             // TODO: 17.04.2022 do for all not only root
-            Set<Edge> min = findMinimalPerfectMatching(completeGraph, 0);
+            Set<Edge> min = findMinPerfectMatching(completeGraph);
             System.out.println("min" + min);
             double weight = 0;
             for (Edge edge : min) {
@@ -39,6 +39,20 @@ public class Solver {
             System.out.println(graph);
             genDijkstra();
         }
+    }
+
+    private Set<Edge> findMinPerfectMatching(Graph complete) {
+        Set<Edge> min = null;
+        double minWeight = Double.MAX_VALUE;
+        for (Integer integer : complete.getNodes().keySet()) {
+            Set<Edge> set = findMinimalPerfectMatching(complete, integer);
+            double d = set.stream().mapToDouble(value -> value.getPath().getWeight()).sum();
+            if (d < minWeight) {
+                min = set;
+                minWeight = d;
+            }
+        }
+        return min;
     }
 
     private void genDijkstra() {

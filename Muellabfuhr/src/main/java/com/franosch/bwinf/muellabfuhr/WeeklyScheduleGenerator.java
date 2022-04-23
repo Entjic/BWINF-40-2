@@ -11,6 +11,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 public class WeeklyScheduleGenerator {
+    private final int runner;
     private final String path;
 
 
@@ -21,7 +22,7 @@ public class WeeklyScheduleGenerator {
         System.out.println(solver.findOddDegree().size());
         solver.makeEven();
         List<Cycle> cpp = solver.solveChinesePostmanProblem();
-        List<Result> results = solver.allocate(5, cpp);
+        List<Result> results = solver.allocate(runner, cpp);
         Collections.sort(results);
         Result result = results.get(0);
         System.out.println("---------");
