@@ -3,12 +3,16 @@ package com.franosch.bwinf.zara.model;
 
 import lombok.Getter;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 
 @Getter
-public class DataSet {
+public class DataSet implements Comparable {
 
 
     private static final AtomicInteger atomicInteger = new AtomicInteger();
@@ -50,6 +54,19 @@ public class DataSet {
     public DataSet(boolean allNull, int keyLength) {
         this.keyLength = keyLength;
         this.content = new boolean[keyLength];
+        Set<DataSet[]> set = new HashSet<>();
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        int other = ((DataSet) o).id;
+        if (id > other) {
+            return 1;
+        }
+        if (id == other) {
+            return 0;
+        }
+        return -1;
     }
 
     @Override

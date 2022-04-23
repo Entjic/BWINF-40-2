@@ -26,7 +26,7 @@ public class Main {
             System.out.println(pre);
             path = pre + "rsc/";
         } else {
-            name = "stapel14";
+            name = "stapel13";
             path = TEST_RESOURCES;
         }
         run(name, path);

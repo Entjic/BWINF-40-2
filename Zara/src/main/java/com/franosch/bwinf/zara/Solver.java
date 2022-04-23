@@ -2,18 +2,21 @@ package com.franosch.bwinf.zara;
 
 import com.franosch.bwinf.zara.model.DataSet;
 import com.franosch.bwinf.zara.model.Mastercard;
-import lombok.RequiredArgsConstructor;
+import com.franosch.bwinf.zara.model.Tuple;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@RequiredArgsConstructor
 public class Solver {
     private final int keys;
     private long time;
     private final List<DataSet[]> empty = new ArrayList<>();
+
+    public Solver(int keys) {
+        this.keys = keys + 1;
+    }
 
     public List<DataSet[]> calcSubsets(DataSet[] superSet, int k) {
         List<DataSet[]> solutions = new ArrayList<>();
@@ -59,7 +62,7 @@ public class Solver {
         System.out.println(keys);
         System.out.println(bitLength);
         System.out.println(dateFormat.format(time));
-        solve(dataSets, dataSets, 0, 2, keys + 1, new ArrayList<>(), new DataSet(true, bitLength));
+        solve(dataSets, dataSets, 0, 2, keys, new ArrayList<>(), new DataSet(true, bitLength));
         System.out.println(result);
         return result;
     }
@@ -86,30 +89,20 @@ public class Solver {
         AtomicInteger counter = new AtomicInteger();
         AtomicInteger progress = new AtomicInteger();
 
-        Collection<DataSet[]> zeroFourSubSets = calcSubsets(zero.toArray(DataSet[]::new), 4);
-        for (Collection<DataSet[]> sets : split(zeroFourSubSets)) {
-            new Thread(() -> {
-                for (DataSet[] zeroFourSubSet : sets) {
-                    int current = counter.incrementAndGet();
-                    if (list.contains(current)) {
-                        System.out.println(progress.incrementAndGet() * 10 + "%");
-                    }
-                    solve3(all, List.of(zeroFourSubSet));
-                }
-            }).start();
-        }
+        chooseFour(zero, counter, list, progress, all);
 
+        chooseFour(one, counter, list, progress, all);
+
+    }
+
+    private void chooseFour(List<DataSet> one, AtomicInteger counter, List<Integer> list, AtomicInteger progress, Collection<DataSet> all) {
         Collection<DataSet[]> oneFourSubSets = calcSubsets(one.toArray(DataSet[]::new), 4);
-        for (Collection<DataSet[]> sets : split(oneFourSubSets)) {
-            new Thread(() -> {
-                for (DataSet[] oneFourSubSet : sets) {
-                    int current = counter.incrementAndGet();
-                    if (list.contains(current)) {
-                        System.out.println(progress.incrementAndGet() * 10 + "%");
-                    }
-                    solve3(all, List.of(oneFourSubSet));
-                }
-            }).start();
+        for (DataSet[] oneFourSubSet : oneFourSubSets) {
+            int current = counter.incrementAndGet();
+            if (list.contains(current)) {
+                System.out.println(progress.incrementAndGet() * 10 + "%");
+            }
+            solve3(all, List.of(oneFourSubSet));
         }
     }
 
@@ -191,8 +184,8 @@ public class Solver {
         one.removeAll(zero);
 
 
-        for (int i = 0; i < 11 - chosen.size() && 11 - chosen.size() - i >= 0; i += 2) {
-            testForSolution(zero, 11 - chosen.size() - i, one, i, xor, chosen, index);
+        for (int i = 0; i < keys - chosen.size() && keys - chosen.size() - i >= 0; i += 2) {
+            testForSolution(zero, keys - chosen.size() - i, one, i, xor, chosen, index);
         }
     }
 
@@ -206,44 +199,89 @@ public class Solver {
             List<List<DataSet[]>> list;
             List<DataSet[]> indexModZero;
             List<DataSet[]> indexModOne;
-            if (this.keys + 1 - zeros <= 4) {
-                checkForLength(zero, zeros, 0, xor, chosen, index, empty, empty);
+            if (chosen.stream().allMatch(dataSet -> List.of(4, 25, 16, 24, 21, 7, 41, 13, 11, 10, 1).contains(dataSet.getId()))) {
+                System.out.println("here");
+            }
+            Set<Tuple<List<DataSet[]>>> set = new HashSet<>(generateForLength(zero, zeros, index));
+            //   Set<Tuple<List<DataSet[]>>> set = null;
+            index = getIndex(xor, index);
+            if (this.keys - zeros <= 4) {
+                checkForLength(zero, zeros, 0, xor, chosen, index, empty, empty, set);
                 return;
             }
             subSets = calcSubsets(one.toArray(DataSet[]::new), ones);
             list = split(subSets, index);
             indexModZero = list.get(0);
             indexModOne = list.get(1);
-            checkForLength(zero, zeros, ones, xor, chosen, index, indexModZero, indexModOne);
+            checkForLength(zero, zeros, ones, xor, chosen, index, indexModZero, indexModOne, set);
 
         }
     }
 
+    private List<Tuple<List<DataSet[]>>> generateForLength(List<DataSet> zero, int zeros, int index) {
+        List<DataSet> zeroSorted = sort(zero, index);
+        List<DataSet> zeroZero = getZeros(zeroSorted, index);
+        List<DataSet> zeroOne = new ArrayList<>(zeroSorted);
+        zeroOne.removeAll(zeroZero);
+        List<Tuple<List<DataSet[]>>> combined = new ArrayList<>();
+        for (int i = 0; i < zeros; i++) {
+            combined.add(generateZeroSubSets(zeroZero, zeros, i, zeroOne));
+        }
+        return combined;
+    }
+
     private void checkForLength(List<DataSet> zero, int zeros, int ones, DataSet xor,
                                 Collection<DataSet> chosen, int index,
-                                List<DataSet[]> indexModZero, List<DataSet[]> indexModOne) {
+                                List<DataSet[]> indexModZero, List<DataSet[]> indexModOne,
+                                Set<Tuple<List<DataSet[]>>> possibleZeroSolutions) {
         List<DataSet> zeroSorted = sort(zero, index);
         List<DataSet> zeroZero = getZeros(zeroSorted, index);
         List<DataSet> zeroOne = new ArrayList<>(zeroSorted);
         zeroOne.removeAll(zeroZero);
         for (int i = 0; i < zeros; i++) {
             if (i % 2 == 0) {
-                checkForResult(zeroZero, zeros, i, zeroOne, ones, xor, chosen, indexModZero);
+                checkForResult(zeroZero, zeros, i, zeroOne, ones, xor, chosen, indexModZero, possibleZeroSolutions);
             } else {
-                checkForResult(zeroZero, zeros, i, zeroOne, ones, xor, chosen, indexModOne);
+                checkForResult(zeroZero, zeros, i, zeroOne, ones, xor, chosen, indexModOne, possibleZeroSolutions);
             }
         }
     }
 
+    private Tuple<List<DataSet[]>> generateZeroSubSets(List<DataSet> zeroZero, int zeros, int x,
+                                                       List<DataSet> zeroOne) {
+        List<DataSet[]> zeroSubSets;
+        List<DataSet[]> oneSubSets;
+        zeroSubSets = calcSubsets(zeroZero.toArray(DataSet[]::new), zeros - x);
+        if (zeroSubSets.size() == 0 && zeros - x > 0) {
+            return Tuple.of(null, null, zeros);
+        }
+        oneSubSets = calcSubsets(zeroOne.toArray(DataSet[]::new), x);
+        if (oneSubSets.size() == 0 && x > 0) {
+            return Tuple.of(null, null, zeros);
+        }
+        zeroSubSets = sort(zeroSubSets);
+        oneSubSets = sort(oneSubSets);
+        return Tuple.of(zeroSubSets, oneSubSets, zeros);
+    }
+
+    private List<DataSet[]> sort(List<DataSet[]> dataSets) {
+        for (DataSet[] s : dataSets) {
+            Arrays.sort(s);
+        }
+        return dataSets;
+    }
+
     private void checkForResult(List<DataSet> zeroZero, int zeros, int x,
                                 List<DataSet> zeroOne, int ones, DataSet xor,
-                                Collection<DataSet> chosen, List<DataSet[]> indexMod) {
+                                Collection<DataSet> chosen, List<DataSet[]> indexMod,
+                                Set<Tuple<List<DataSet[]>>> possibleZeroSolutions) {
         List<DataSet[]> zeroSubSets;
         List<DataSet[]> oneSubSets;
         zeroSubSets = calcSubsets(zeroZero.toArray(new DataSet[0]), zeros - x);
         oneSubSets = calcSubsets(zeroOne.toArray(DataSet[]::new), x);
         // System.out.println(zeros + " " + x + " " + zeroSubSets.size() + " " + oneSubSets.size());
-        checkSolution(zeros, ones, xor, chosen, indexMod, zeroSubSets, oneSubSets);
+
+        checkSolution(zeros, ones, xor, chosen, indexMod, zeroSubSets, oneSubSets, possibleZeroSolutions);
     }
 
 
@@ -290,30 +328,89 @@ public class Solver {
     }
 
     private void checkSolution(int zeros, int ones, DataSet xor, Collection<DataSet> chosen,
-                               List<DataSet[]> zeroSubSets, List<DataSet[]> zeroZeroSubSets, List<DataSet[]> oneZeroSubSets) {
+                               List<DataSet[]> indexMod, List<DataSet[]> zeroSubSets,
+                               List<DataSet[]> oneSubSets, Set<Tuple<List<DataSet[]>>> tupleSet) {
+        //    if (indexMod.size() == 0) {
+        //        checkSolution(zeros, ones, xor, chosen, zeroSubSets, oneSubSets);
+        //        return;
+        //    }
         if (zeroSubSets.size() == 0) {
-            checkSolution(zeros, ones, xor, chosen, zeroZeroSubSets, oneZeroSubSets);
+            checkSolution(zeros, ones, xor, chosen, indexMod, oneSubSets);
             return;
         }
-        if (zeroZeroSubSets.size() == 0) {
-            checkSolution(zeros, ones, xor, chosen, zeroSubSets, oneZeroSubSets);
+        if (oneSubSets.size() == 0) {
+            checkSolution(zeros, ones, xor, chosen, indexMod, zeroSubSets);
             return;
         }
-        if (oneZeroSubSets.size() == 0) {
-            checkSolution(zeros, ones, xor, chosen, zeroSubSets, zeroZeroSubSets);
-            return;
-        }
-        for (DataSet[] zeroSubSet : zeroSubSets) {
-            for (DataSet[] zeroZeroSubSet : zeroZeroSubSets) {
-                for (DataSet[] oneZeroSubSet : oneZeroSubSets) {
-                    if (isResult(xor, zeroSubSet, zeroZeroSubSet, oneZeroSubSet)) {
-                        printSolution(chosen, zeroSubSet, zeroZeroSubSet, oneZeroSubSet);
-                        System.out.println(zeros + " " + ones);
-                        System.exit(0);
+
+        for (DataSet[] zeroZeroSubSet : zeroSubSets) {
+            for (DataSet[] oneZeroSubSet : oneSubSets) {
+                if (isIntersection(zeroZeroSubSet, oneZeroSubSet, tupleSet)) {
+                    for (DataSet[] zeroSubSet : indexMod) {
+                        if (isResult(xor, zeroSubSet, zeroZeroSubSet, oneZeroSubSet)) {
+                            printSolution(chosen, zeroSubSet, zeroZeroSubSet, oneZeroSubSet);
+                            System.out.println(zeros + " " + ones);
+                            System.exit(0);
+                        }
                     }
                 }
             }
         }
+    }
+
+
+    private boolean isIntersection(DataSet[] a, DataSet[] b, Set<Tuple<List<DataSet[]>>> set) {
+        for (Tuple<List<DataSet[]>> listTuple : set) {
+            List<DataSet[]> c = listTuple.getLeft();
+            List<DataSet[]> d = listTuple.getRight();
+            if (isIntersection(a, b, c, d)) return true;
+        }
+        return false;
+    }
+
+    private boolean isIntersection(DataSet[] a, DataSet[] b, List<DataSet[]> c, List<DataSet[]> d) {
+        DataSet[] e = new DataSet[a.length + b.length];
+        System.arraycopy(a, 0, e, 0, a.length);
+        System.arraycopy(b, 0, e, a.length, a.length + b.length - a.length);
+        List<DataSet[]> aSub;
+        if (c == null || c.size() == 0) {
+            aSub = new ArrayList<>();
+        } else {
+            aSub = calcSubsets(e, c.get(0).length);
+        }
+        boolean found = false;
+        for (DataSet[] dataSets : aSub) {
+            Arrays.sort(dataSets);
+            for (DataSet[] cs : c) {
+                if (Arrays.equals(cs, dataSets)) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (!found) {
+            return false;
+        }
+        if (d == null || d.size() == 0) {
+            return true;
+        }
+        List<DataSet[]> bSub = calcSubsets(e, d.get(0).length);
+        for (DataSet[] dataSets : bSub) {
+            Arrays.sort(dataSets);
+            for (DataSet[] ds : d) {
+                if (Arrays.equals(ds, dataSets)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean containsID(DataSet[] dataSets, int id) {
+        for (DataSet dataSet : dataSets) {
+            if (dataSet.getId() == id) return true;
+        }
+        return false;
     }
 
 
