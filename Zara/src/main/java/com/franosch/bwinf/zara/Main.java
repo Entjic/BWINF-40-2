@@ -16,24 +16,26 @@ public class Main {
     public static void main(String[] args) {
         String path;
         String name;
+        int part;
         boolean test = true;
         if (!test) {
             for (String arg : args) {
                 System.out.println(arg);
             }
             name = args[0];
+            part = Integer.parseInt(args[1]);
             String pre = getCurrentPath();
             System.out.println(pre);
             path = pre + "rsc/";
         } else {
-            name = "stapel14";
+            name = "stapel5";
             path = TEST_RESOURCES;
+            part = 0;
         }
-        run(name, path);
+        run(name, path, part);
     }
 
-    private static void run(String name, String path) {
-
+    private static void run(String name, String path, int part) {
 
         // 11 -> 1, 4, 7, 10, 11, 13, 16, 21, 24, 25, 41
         FileReader fileReader = new FileReader(name, path);
@@ -47,7 +49,7 @@ public class Main {
             dataSets.add(dataSet);
         }
         int length = Integer.parseInt(fileReader.getContent().get(0).split(" ")[1]);
-        Solver solver = new Solver(length);
+        Solver solver = new Solver(length, part);
         solver.solve(dataSets);
     }
 
@@ -65,7 +67,7 @@ public class Main {
             copy.remove(dataSet);
             key[i] = dataSet;
         }
-        Solver solver = new Solver(keys);
+        Solver solver = new Solver(keys, 0);
         Mastercard mastercard = new Mastercard(key);
         System.out.println(mastercard);
         DataSet master = mastercard.getContent();

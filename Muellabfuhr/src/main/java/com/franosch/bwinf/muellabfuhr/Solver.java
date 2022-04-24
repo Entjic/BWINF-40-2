@@ -62,7 +62,7 @@ public class Solver {
     }
 
     public List<Cycle> solveChinesePostmanProblem() {
-        List<Cycle> cpp = eulerPath(graph);
+        List<Cycle> cpp = hierholzer(graph);
         System.out.println(cpp);
         System.out.println(sum(cpp) / 5);
 
@@ -70,7 +70,7 @@ public class Solver {
     }
 
 
-    private List<Cycle> eulerPath(Graph graph) {
+    private List<Cycle> hierholzer(Graph graph) {
         List<Edge> open = new ArrayList<>(graph.getEdges());
         Node root = graph.getNodes().get(0);
         Node start;
@@ -328,17 +328,22 @@ public class Solver {
             openRunner.remove(runner);
             List<Cycle> list = new ArrayList<>(runner.getCycles());
             Collections.reverse(list);
+            // Iteriere über alle Kreise des aktuellen Runners
             for (Cycle inner : list) {
+                // Gibt alle zum aktuellen Kreis benachbarten Kreise
                 List<Cycle> neighbouring = getNeighbourCircle(inner, open);
                 if (!neighbouring.isEmpty()) {
-                    // System.out.println("found smth");
+                    // Wähle den ersten
                     Cycle current = neighbouring.get(0);
                     runner.getCycles().add(current);
                     return current;
                 }
             }
+            // Gibt nächsten Kreis am Cluster und Gewicht der Korrespondierenden Bridge
             Pair<Cycle, Double> pair = getNonNeighbouringCycle(runner, open);
             double combined = runner.calcWeight() + pair.getLeft().weight() + 2 * pair.getRight();
+            // Wenn Gewicht des Runners + Gewicht des Kreise + 2 * Gewicht der Bridge
+            // kleiner ist als der größte Runner, füge den Kreis hinzu
             if (biggest.calcWeight() > combined) {
                 runner.getCycles().add(pair.getLeft());
                 runner.setBias(runner.getBias() + pair.getRight());

@@ -140,7 +140,7 @@ public class Graph {
         edges.forEach(edge -> stringBuilder
                 .append("\n")
                 .append(edge.getPath().getFrom())
-                .append(" ")
+                .append(" - ")
                 .append(edge.getPath().getTo())
                 .append(" ")
                 .append(edge.getPath().getWeight()));

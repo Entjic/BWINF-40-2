@@ -14,6 +14,7 @@ public class Solver {
     private final int keys;
     private long time;
     private final List<DataSet[]> empty = new ArrayList<>();
+    private final int part;
 
     public List<DataSet[]> calcSubsets(DataSet[] superSet, int k) {
         List<DataSet[]> solutions = new ArrayList<>();
@@ -59,95 +60,78 @@ public class Solver {
         System.out.println(keys);
         System.out.println(bitLength);
         System.out.println(dateFormat.format(time));
-        solve(dataSets, dataSets, 0, 2, keys + 1, new ArrayList<>(), new DataSet(true, bitLength));
+        solve(dataSets, true);
         System.out.println(result);
         return result;
     }
 
-    public void solve(Collection<DataSet> all, Collection<DataSet> dataSets, int recursionDepth, int maxRecursionDepth, int length, List<DataSet> chosen, DataSet bitsUsed) {
+    public void solve(Collection<DataSet> all, boolean dummy){
 
-        if (length - chosen.size() <= 5 || dataSets.size() <= 1 || recursionDepth == maxRecursionDepth) {
-            solve3(all, chosen);
-            return;
-        }
-        int[] zeroCounted = countBits(all); // TODO: 21.04.2022
-        System.out.println(Arrays.toString(zeroCounted));
-        int index = nextBit(bitsUsed, chosen);
-        // System.out.println(index);
-        DataSet copyBitsUsed = new DataSet(Arrays.copyOf(bitsUsed.getContent(), bitsUsed.getContent().length));
-        copyBitsUsed.getContent()[index] = true;
-        List<DataSet> sorted = sort(dataSets, index);
-        List<DataSet> zero = getZeros(sorted, index);
+        List<DataSet> sorted = sort(all, 0);
+        List<DataSet> zero = getZeros(sorted, 0);
         List<DataSet> one = new ArrayList<>(sorted);
         one.removeAll(zero);
+
+        new Thread(() -> new Timer().scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println(new Date());
+            }
+        }, 0, 1000 * 60 * 10)).start();
+        int i = Math.min(keys / 2, 4);
+        Collection<DataSet[]> subSetsOne = calcSubsets(one.toArray(DataSet[]::new), i);
+        Collection<DataSet[]> subSetsZero = calcSubsets(zero.toArray(DataSet[]::new), i);
+        Collection<DataSet[]> combined = new ArrayList<>(subSetsOne);
+        combined.addAll(subSetsZero);
         final int max = (int) (binomial(zero.size(), 4) + binomial(one.size(), 4)) / 10;
         final List<Integer> list = List.of(max, 2 * max, 3 * max, 4 * max, 5 * max, 6 * max, 7 * max, 8 * max, 9 * max, 10 * max);
         System.out.println(list);
         AtomicInteger counter = new AtomicInteger();
         AtomicInteger progress = new AtomicInteger();
-
-        Collection<DataSet[]> zeroFourSubSets = calcSubsets(zero.toArray(DataSet[]::new), 4);
-        for (Collection<DataSet[]> sets : split(zeroFourSubSets)) {
-            new Thread(() -> {
-                for (DataSet[] zeroFourSubSet : sets) {
-                    int current = counter.incrementAndGet();
-                    if (list.contains(current)) {
-                        System.out.println(progress.incrementAndGet() * 10 + "%");
-                    }
-                    solve3(all, List.of(zeroFourSubSet));
-                }
-            }).start();
+        Collection<Collection<DataSet[]>> split = split(combined, 4);
+        for (Collection<DataSet[]> sets : split) {
+            System.out.println(sets.size());
         }
 
-        Collection<DataSet[]> oneFourSubSets = calcSubsets(one.toArray(DataSet[]::new), 4);
-        for (Collection<DataSet[]> sets : split(oneFourSubSets)) {
-            new Thread(() -> {
-                for (DataSet[] oneFourSubSet : sets) {
-                    int current = counter.incrementAndGet();
-                    if (list.contains(current)) {
-                        System.out.println(progress.incrementAndGet() * 10 + "%");
-                    }
-                    solve3(all, List.of(oneFourSubSet));
-                }
-            }).start();
+        for (Collection<DataSet[]> sets : split) {
+            startThread(all, sets, counter, progress, list);
         }
+
     }
 
-    private <T> Collection<Collection<T>> split(Collection<T> splitMe) {
-        int a = splitMe.size();
-        a = a / 4;
-        Collection<T> collection0 = new ArrayList<>();
-        Collection<T> collection1 = new ArrayList<>();
-        Collection<T> collection2 = new ArrayList<>();
-        Collection<T> collection3 = new ArrayList<>();
-        int counter = 0;
-        for (T t : splitMe) {
-            if (counter < a) {
-                collection0.add(t);
-                counter++;
-                continue;
+    private void startThread(Collection<DataSet> all, Collection<DataSet[]> sets,
+                             AtomicInteger counter, AtomicInteger progress, List<Integer> list) {
+        new Thread(() -> {
+            for (DataSet[] oneFourSubSet : sets) {
+                int current = counter.incrementAndGet();
+                if (list.contains(current)) {
+                    System.out.println(progress.incrementAndGet() * 10 + "%");
+                }
+                solve3(all, List.of(oneFourSubSet));
             }
-            if (counter < 2 * a) {
-                collection1.add(t);
-                counter++;
-                continue;
-            }
-            if (counter < 3 * a) {
-                collection2.add(t);
-                counter++;
-                continue;
-            }
-            if (counter < 4 * a) {
-                collection3.add(t);
-                counter++;
-            }
+        }).start();
+    }
 
-        }
+    private <T> List<Collection<T>> split(Collection<T> splitMe, int pieces) {
+        int a = splitMe.size();
+        a = a / pieces;
+        Stack<T> open = new Stack<>();
+        open.addAll(splitMe);
         List<Collection<T>> out = new ArrayList<>();
-        out.add(collection0);
-        out.add(collection1);
-        out.add(collection2);
-        out.add(collection3);
+        Collection<T> current = new ArrayList<>();
+        int i = 0;
+        while (!open.isEmpty()) {
+            T item = open.pop();
+            if (i <= a) {
+                current.add(item);
+                i++;
+            } else {
+                out.add(current);
+                current = new ArrayList<>();
+                i = 0;
+            }
+        }
+        out.add(current);
         return out;
     }
 
@@ -191,13 +175,12 @@ public class Solver {
         one.removeAll(zero);
 
 
-        for (int i = 0; i < 11 - chosen.size() && 11 - chosen.size() - i >= 0; i += 2) {
-            testForSolution(zero, 11 - chosen.size() - i, one, i, xor, chosen, index);
+        for (int i = 0; i < keys + 1 - chosen.size() && keys + 1 - chosen.size() - i >= 0; i += 2) {
+            testForSolution(zero, keys + 1 - chosen.size() - i, one, i, xor, chosen, index);
         }
     }
 
     private void testForSolution(List<DataSet> zero, int zeros, List<DataSet> one, int ones, DataSet xor, Collection<DataSet> chosen, int index) {
-
         if (zero.size() >= zeros && one.size() >= ones) {
 
             List<DataSet[]> subSets;

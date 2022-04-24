@@ -14,7 +14,7 @@ public class Main {
             System.exit(-1);
         }
         String path = "";
-        int nr = 0, runner = 5;
+        int nr = 0, runner = 4;
         if (args.length == 1) {
             String pre = getCurrentPath();
             System.out.println(pre);
@@ -30,8 +30,8 @@ public class Main {
         }
         if (args.length > 2) {
             System.out.println("Nutze interne Testresourcen");
-            path = "muellabfuhr/src/test/resources/";
-            nr = 8;
+            path =  new File("").getAbsolutePath() + "/muellabfuhr/src/test/resources/";
+            nr = 0;
         }
         WeeklyScheduleGenerator weeklyScheduleGenerator = new WeeklyScheduleGenerator(runner, path);
         weeklyScheduleGenerator.findWeeklySchedule(nr);
