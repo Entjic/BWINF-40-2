@@ -13,25 +13,24 @@ public class Main {
             System.out.println("Bitte spezifiziere die Nummer der Aufgabe / der Resource");
             System.exit(-1);
         }
-        String path = "";
-        int nr = 0, runner = 4;
+        String path;
+        int nr, runner = 4;
         if (args.length == 1) {
             String pre = getCurrentPath();
             System.out.println(pre);
             path = pre + "resources/";
             nr = Integer.parseInt(args[0]);
-        }
+        }else
         if (args.length == 2) {
             String pre = getCurrentPath();
             System.out.println(pre);
             path = pre + "resources/";
             nr = Integer.parseInt(args[0]);
             runner = Integer.parseInt(args[1]);
-        }
-        if (args.length > 2) {
+        }else {
             System.out.println("Nutze interne Testresourcen");
             path =  new File("").getAbsolutePath() + "/muellabfuhr/src/test/resources/";
-            nr = 0;
+            nr = 7;
         }
         WeeklyScheduleGenerator weeklyScheduleGenerator = new WeeklyScheduleGenerator(runner, path);
         weeklyScheduleGenerator.findWeeklySchedule(nr);

@@ -26,7 +26,7 @@ public class SolverTest {
             dataSets.add(dataSet);
         }
         int length = Integer.parseInt(fileReader.getContent().get(0).split(" ")[1]);
-        Solver solver = new Solver(length, 0);
+        Solver solver = new Solver(length);
         Set<DataSet> result = solver.solve(dataSets);
         Assertions.assertEquals(length + 1, result.size());
 
@@ -43,7 +43,7 @@ public class SolverTest {
             dataSets.add(dataSet);
         }
         int length = Integer.parseInt(fileReader.getContent().get(0).split(" ")[1]);
-        Solver solver = new Solver(length, 0);
+        Solver solver = new Solver(length);
         Set<DataSet> result = solver.solve(dataSets);
         Assertions.assertEquals(length + 1, result.size());
 
@@ -63,7 +63,7 @@ public class SolverTest {
             dataSets.add(dataSet);
         }
         int length = Integer.parseInt(fileReader.getContent().get(0).split(" ")[1]);
-        Solver solver = new Solver(length, 0);
+        Solver solver = new Solver(length);
         Set<DataSet> result = solver.solve(dataSets);
         Assertions.assertEquals(length + 1, result.size());
 
@@ -83,7 +83,7 @@ public class SolverTest {
             dataSets.add(dataSet);
         }
         int length = Integer.parseInt(fileReader.getContent().get(0).split(" ")[1]);
-        Solver solver = new Solver(length, 0);
+        Solver solver = new Solver(length);
         Set<DataSet> result = solver.solve(dataSets);
         Assertions.assertEquals(length + 1, result.size());
     }
@@ -116,7 +116,7 @@ public class SolverTest {
         List<DataSet> combined = new ArrayList<>();
         List.of(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u)
                 .forEach(booleans -> combined.add(new DataSet(booleans)));
-        Solver solver = new Solver(6, 0);
+        Solver solver = new Solver(6);
         Set<DataSet> result = solver.solve(combined);
         Assertions.assertEquals(7, result.size());
 
@@ -151,7 +151,7 @@ public class SolverTest {
         List<DataSet> combined = new ArrayList<>();
         List.of(master, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u)
                 .forEach(booleans -> combined.add(new DataSet(booleans)));
-        Solver solver = new Solver(10, 0);
+        Solver solver = new Solver(10);
         Set<DataSet> result = solver.solve(combined);
         Assertions.assertEquals(11, result.size());
 
@@ -190,7 +190,7 @@ public class SolverTest {
 
         List.of(master, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u)
                 .forEach(booleans -> combined.add(new DataSet(booleans)));
-        Solver solver = new Solver(10, 0);
+        Solver solver = new Solver(10);
         Set<DataSet> result = solver.solve(combined);
         Assertions.assertEquals(11, result.size());
 

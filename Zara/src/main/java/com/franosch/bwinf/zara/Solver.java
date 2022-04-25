@@ -14,7 +14,6 @@ public class Solver {
     private final int keys;
     private long time;
     private final List<DataSet[]> empty = new ArrayList<>();
-    private final int part;
 
     public List<DataSet[]> calcSubsets(DataSet[] superSet, int k) {
         List<DataSet[]> solutions = new ArrayList<>();
@@ -67,7 +66,6 @@ public class Solver {
 
     public void solve(List<DataSet> all, boolean dummy) {
 
-        //AtomicInteger counter = new AtomicInteger();
         List<DataSet> sorted = sort(all, 0);
         List<DataSet> zero = getZeros(sorted, 0);
         List<DataSet> one = new ArrayList<>(sorted);
@@ -88,7 +86,6 @@ public class Solver {
             }
             final int j = i;
             new Thread(() -> {
-                System.out.println("Thread alive 0 " + j);
                 List<DataSet> zeroZerosReduced = new ArrayList<>(zeroZeros);
                 List<DataSet>  unused = new ArrayList<>(zero);
                 unused.removeAll(part);
@@ -114,7 +111,6 @@ public class Solver {
             }
             final int j = i;
             new Thread(() -> {
-                System.out.println("Thread alive 1 " + j);
                 List<DataSet> oneZerosReduced = new ArrayList<>(oneZeros);
                 List<DataSet>  unused = new ArrayList<>(zero);
                 unused.removeAll(part);
@@ -125,32 +121,6 @@ public class Solver {
                 testOnes(all, part, oneZerosReduced, oneOnesReduced);
             }).start();
         }
-
-
-//        new Thread(() -> new Timer().scheduleAtFixedRate(new TimerTask() {
-//            @Override
-//            public void run() {
-//                System.out.println(new Date());
-//            }
-//        }, 0, 1000 * 60 * 10)).start();
-//        int i = Math.min(keys / 2, 4);
-//        Collection<DataSet[]> subSetsOne = calcSubsets(one.toArray(DataSet[]::new), i);
-//        Collection<DataSet[]> subSetsZero = calcSubsets(zero.toArray(DataSet[]::new), i);
-//        Collection<DataSet[]> combined = new ArrayList<>(subSetsOne);
-//        combined.addAll(subSetsZero);
-//        final int max = (int) (binomial(zero.size(), 4) + binomial(one.size(), 4)) / 10;
-//        final List<Integer> list = List.of(max, 2 * max, 3 * max, 4 * max, 5 * max, 6 * max, 7 * max, 8 * max, 9 * max, 10 * max);
-//        System.out.println(list);
-//        AtomicInteger counter = new AtomicInteger();
-//        AtomicInteger progress = new AtomicInteger();
-//        Collection<Collection<DataSet[]>> split = split(combined, 4);
-//        for (Collection<DataSet[]> sets : split) {
-//            System.out.println(sets.size());
-//        }
-//
-//        for (Collection<DataSet[]> sets : split) {
-//            startThread(all, sets, counter, progress, list);
-//        }
 
     }
 
@@ -165,9 +135,8 @@ public class Solver {
         List<DataSet> oneOneCopy;
 
         for (DataSet firstChosen : one) {
-            //System.out.println("datasets tested: " + counter.get());
             alreadyDone.add(firstChosen);
-            oneCopy = new ArrayList(one);
+            oneCopy = new ArrayList<>(one);
             oneCopy.removeAll(alreadyDone);
 
             oneZeroCopy = new ArrayList<>(oneZeros);
@@ -176,38 +145,30 @@ public class Solver {
             oneOneCopy.removeAll(alreadyDone);
 
             for (DataSet secondChosen : oneCopy) {
-                //  System.out.println("one zero");
                 oneZeroCopy.remove(secondChosen);
                 for (DataSet thirdChosen : oneZeroCopy) {
                     third = new ArrayList<>(oneZeroCopy);
                     third.remove(thirdChosen);
 
                     for (DataSet fourthChosen : third) {
-                        allCopy = new ArrayList<DataSet>(all);
+                        allCopy = new ArrayList<>(all);
                         allCopy.removeAll(alreadyDone);
                         allCopy.remove(secondChosen);
                         allCopy.remove(thirdChosen);
                         allCopy.remove(fourthChosen);
-                        //      System.out.println(all.get(i).getId() + " " + all.get(j) .getId() + " " +
-                        //            oneZeroCopy.get(m).getId() + " " + oneZeroCopy.get(n).getId());
-                        //counter.incrementAndGet();
                         solve3(allCopy, List.of(firstChosen, secondChosen, thirdChosen, fourthChosen));
                     }
                 }
-                //System.out.println("one ones");
                 oneOneCopy.remove(secondChosen);
                 for (DataSet thirdChosen : oneOneCopy) {
                     third = new ArrayList<>(oneOneCopy);
                     third.remove(thirdChosen);
                     for (DataSet fourthChosen : third) {
-                        allCopy = new ArrayList<DataSet>(all);
+                        allCopy = new ArrayList<>(all);
                         allCopy.removeAll(alreadyDone);
                         allCopy.remove(secondChosen);
                         allCopy.remove(thirdChosen);
                         allCopy.remove(fourthChosen);
-                        //    System.out.println(all.get(i).getId() + " " + all.get(j) .getId() + " " +
-                        //           oneOneCopy.get(m).getId() + " " + oneOneCopy.get(n).getId());
-                      //  counter.incrementAndGet();
                         solve3(allCopy, List.of(firstChosen, secondChosen, thirdChosen, fourthChosen));
                     }
                 }
@@ -219,7 +180,7 @@ public class Solver {
     private void testZeros(List<DataSet> all, List<DataSet> zero, List<DataSet> zeroZeros, List<DataSet> zeroOnes) {
         List<DataSet> allCopy;
         List<DataSet> zeroCopy;
-        List<DataSet> oneCopy;
+
 
         List<DataSet> alreadyDone = new ArrayList<>();
         List<DataSet> zeroZeroCopy;
@@ -227,9 +188,8 @@ public class Solver {
 
         List<DataSet> third;
         for (DataSet firstChosen : zero) {
-          //  System.out.println("datasets tested: " + counter.get());
             alreadyDone.add(firstChosen);
-            zeroCopy = new ArrayList(zero);
+            zeroCopy = new ArrayList<>(zero);
             zeroCopy.removeAll(alreadyDone);
             zeroZeroCopy = new ArrayList<>(zeroZeros);
             zeroZeroCopy.removeAll(alreadyDone);
@@ -237,37 +197,29 @@ public class Solver {
             zeroOneCopy.removeAll(alreadyDone);
 
             for (DataSet secondChosen : zeroCopy) {
-                //System.out.println("zero zero");
                 zeroZeroCopy.remove(secondChosen);
                 for (DataSet thirdChosen : zeroZeroCopy) {
                     third = new ArrayList<>(zeroZeroCopy);
                     third.remove(thirdChosen);
                     for (DataSet fourthChosen : third) {
-                        allCopy = new ArrayList<DataSet>(all);
+                        allCopy = new ArrayList<>(all);
                         allCopy.removeAll(alreadyDone);
                         allCopy.remove(secondChosen);
                         allCopy.remove(thirdChosen);
                         allCopy.remove(fourthChosen);
-                        //System.out.println(all.get(i).getId() + " " + all.get(j) .getId() + " " +
-                        //      zeroZeroCopy.get(m).getId() + " " + zeroZeroCopy.get(n).getId());
-                      // counter.incrementAndGet();
                         solve3(allCopy, List.of(firstChosen, secondChosen, thirdChosen, fourthChosen));
                     }
                 }
-                //System.out.println("zero ones");
                 zeroOneCopy.remove(secondChosen);
                 for (DataSet thirdChosen : zeroOneCopy) {
                     third = new ArrayList<>(zeroOneCopy);
                     third.remove(thirdChosen);
                     for (DataSet fourthChosen : third) {
-                        allCopy = new ArrayList<DataSet>(all);
+                        allCopy = new ArrayList<>(all);
                         allCopy.removeAll(alreadyDone);
                         allCopy.remove(secondChosen);
                         allCopy.remove(thirdChosen);
                         allCopy.remove(fourthChosen);
-                        //  System.out.println(all.get(i).getId() + " " + all.get(j) .getId() + " " +
-                        //        zeroOneCopy.get(m).getId() + " " + zeroOneCopy.get(n).getId());
-                     //   counter.incrementAndGet();
                         solve3(allCopy, List.of(firstChosen, secondChosen, thirdChosen, fourthChosen));
                     }
                 }
@@ -278,55 +230,6 @@ public class Solver {
         }
     }
 
-    private void startThread(Collection<DataSet> all, Collection<DataSet[]> sets,
-                             AtomicInteger counter, AtomicInteger progress, List<Integer> list) {
-        new Thread(() -> {
-            for (DataSet[] oneFourSubSet : sets) {
-                int current = counter.incrementAndGet();
-                if (list.contains(current)) {
-                    System.out.println(progress.incrementAndGet() * 10 + "%");
-                }
-                solve3(all, List.of(oneFourSubSet));
-            }
-        }).start();
-    }
-
-    private <T> List<Collection<T>> split(Collection<T> splitMe, int pieces) {
-        int a = splitMe.size();
-        a = a / pieces;
-        Stack<T> open = new Stack<>();
-        open.addAll(splitMe);
-        List<Collection<T>> out = new ArrayList<>();
-        Collection<T> current = new ArrayList<>();
-        int i = 0;
-        while (!open.isEmpty()) {
-            T item = open.pop();
-            if (i <= a) {
-                current.add(item);
-                i++;
-            } else {
-                out.add(current);
-                current = new ArrayList<>();
-                i = 0;
-            }
-        }
-        out.add(current);
-        return out;
-    }
-
-
-    private int[] countBits(Collection<DataSet> dataSets) {
-        int length = dataSets.stream().findAny().get().getKeyLength();
-        int[] out = new int[length];
-        for (int i = 0; i < length; i++) {
-            int counter = 0;
-            for (DataSet dataSet : dataSets) {
-                if (!dataSet.getContent()[i]) counter++;
-            }
-            out[i] = counter;
-        }
-        return out;
-    }
 
     public void solve3(Collection<DataSet> all, Collection<DataSet> chosen) {
         int index = -1;
@@ -404,7 +307,6 @@ public class Solver {
         List<DataSet[]> oneSubSets;
         zeroSubSets = calcSubsets(zeroZero.toArray(new DataSet[0]), zeros - x);
         oneSubSets = calcSubsets(zeroOne.toArray(DataSet[]::new), x);
-        // System.out.println(zeros + " " + x + " " + zeroSubSets.size() + " " + oneSubSets.size());
         checkSolution(zeros, ones, xor, chosen, indexMod, zeroSubSets, oneSubSets);
     }
 
@@ -533,21 +435,6 @@ public class Solver {
     }
 
 
-    private int nextBit(DataSet bitsUsed, List<DataSet> chosen) {
-        if (chosen.isEmpty()) {
-            return getNextCandidate(chosen, bitsUsed.getContent().length);
-        }
-        DataSet a = chosen.get(chosen.size() - 1);
-        DataSet b = chosen.get(chosen.size() - 2);
-        Mastercard mastercard = new Mastercard(new DataSet[]{a, b});
-        int i = 0;
-        for (boolean bool : mastercard.getContent().getContent()) {
-            if (!bool && !bitsUsed.getContent()[i]) return i;
-            i++;
-        }
-        throw new RuntimeException("No more bits");
-    }
-
     private List<DataSet> getZeros(List<DataSet> dataSets, int i) {
         List<DataSet> zero = new ArrayList<>();
         for (DataSet dataSet : dataSets) {
@@ -556,134 +443,6 @@ public class Solver {
             }
         }
         return zero;
-    }
-
-    public void solve2(Collection<DataSet> allDataSets, Collection<DataSet> chosen) {
-        int index = 0;
-        DataSet xor;
-
-        if (chosen.size() == 0) {
-            xor = new DataSet(true, allDataSets.iterator().next().getKeyLength());
-        } else {
-            xor = XOR(chosen);
-        }
-        index = getIndex(xor, index);
-        List<DataSet> sorted = sort(allDataSets, index);
-        List<DataSet> zero = getZeros(sorted, index);
-        List<DataSet> one = new ArrayList<>(sorted);
-        one.removeAll(zero);
-
-        if (zero.isEmpty()) return;
-        //  System.out.println("filtered " + zero.size() + " one " + one.size());
-        List<DataSet[]> fiveZeroSets = calcSubsets(zero.toArray(new DataSet[0]), 5);
-
-        boolean[] s0, s1, s2, s3, s4;
-        boolean[] chosenXORArray = xor.getContent();
-        boolean found = false;
-        int length = chosenXORArray.length;
-        for (DataSet[] sets : fiveZeroSets) {
-            s0 = sets[0].getContent();
-            s1 = sets[1].getContent();
-            s2 = sets[2].getContent();
-            s3 = sets[3].getContent();
-            s4 = sets[4].getContent();
-
-            for (int i = 0; i < length; i++) {
-                if (s0[i] ^ s1[i] ^ s2[i] ^ s3[i] ^ s4[i] ^ chosenXORArray[i]) {
-                    break;
-                }
-                if (i == length - 1) {
-                    found = true;
-                }
-            }
-            if (found) {
-                printSolution(sets, chosen);
-                System.exit(0);
-            }
-        }
-
-        List<DataSet[]> threeZeroSets = calcSubsets(zero.toArray(new DataSet[0]), 3);
-        List<DataSet[]> oneSets = calcSubsets(one.toArray(new DataSet[0]), 2);
-        for (DataSet[] oneSet : oneSets) {
-
-            s0 = oneSet[0].getContent();
-            s1 = oneSet[1].getContent();
-
-            for (DataSet[] oneOutOfThreeZero : threeZeroSets) {
-                s2 = oneOutOfThreeZero[0].getContent();
-                s3 = oneOutOfThreeZero[1].getContent();
-                s4 = oneOutOfThreeZero[2].getContent();
-                for (int i = 0; i < length; i++) {
-                    if (s0[i] ^ s1[i] ^ s2[i] ^ s3[i] ^ s4[i] ^ chosenXORArray[i]) {
-                        break;
-                    }
-                    if (i == length - 1) {
-                        found = true;
-                    }
-
-                }
-                if (found) {
-                    printSolution(oneOutOfThreeZero, chosen);
-                    System.out.println("also solution: " + Arrays.toString(oneSet));
-                    System.exit(0);
-                }
-            }
-
-        }
-
-        List<DataSet[]> fourOneSets = calcSubsets(one.toArray(new DataSet[0]), 4);
-        for (DataSet[] oneFourSet : fourOneSets) {
-            s0 = oneFourSet[0].getContent();
-            s1 = oneFourSet[1].getContent();
-            s2 = oneFourSet[2].getContent();
-            s3 = oneFourSet[3].getContent();
-
-            for (DataSet oneZeroSet : zero) {
-                s4 = oneZeroSet.getContent();
-                for (int i = 0; i < length; i++) {
-                    if (s0[i] ^ s1[i] ^ s2[i] ^ s3[i] ^ s4[i] ^ chosenXORArray[i]) {
-                        break;
-                    }
-                    if (i == length - 1) {
-                        found = true;
-                    }
-                }
-                if (found) {
-                    printSolution(oneFourSet, chosen);
-                    System.out.println("also solution: " + oneZeroSet);
-                    System.exit(0);
-                }
-            }
-        }
-
-    }
-
-
-    private boolean isResult(DataSet dataSet) {
-        boolean[] content = dataSet.getContent();
-        for (int i = 0, contentLength = content.length; i < contentLength; i++) {
-            if (content[i]) return false;
-        }
-        return true;
-    }
-
-    private boolean isResult(Mastercard combined, DataSet zero) {
-        return isEquals(new Mastercard(new DataSet[]{zero}), combined);
-    }
-
-
-    private void printSolution(DataSet[] subSet, Collection<DataSet> chosen) {
-
-        System.out.println("SOLUTION");
-        for (DataSet dataSet : subSet) {
-            System.out.println(dataSet);
-        }
-        for (DataSet dataSet : chosen) {
-            System.out.println(dataSet);
-        }
-        long dif = System.currentTimeMillis() - time;
-        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
-        System.out.println("required time " + dateFormat.format(dif));
     }
 
     private void printSolution(Collection<DataSet> chosen, DataSet[]... set) {
@@ -700,36 +459,6 @@ public class Solver {
         long dif = System.currentTimeMillis() - time;
         DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
         System.out.println("required time " + dateFormat.format(dif));
-    }
-
-    private boolean isEquals(Mastercard a, Mastercard b) {
-        boolean[] dataSetA = a.getContent().getContent();
-        boolean[] dataSetB = b.getContent().getContent();
-        for (int i = 0; i < dataSetA.length; i++) {
-            if (dataSetA[i] != dataSetB[i]) return false;
-        }
-        return true;
-    }
-
-    private boolean isEquals(DataSet a, DataSet b) {
-        boolean[] contentA = a.getContent();
-        boolean[] contentB = b.getContent();
-        for (int i = 0, contentLength = contentA.length; i < contentLength; i++) {
-            if (contentA[i] != contentB[i]) return false;
-        }
-        return true;
-    }
-
-    private DataSet XOR(DataSet... dataSets) {
-        DataSet current = null;
-        for (DataSet dataSet : dataSets) {
-            if (current == null) {
-                current = dataSet;
-                continue;
-            }
-            current = XOR(current, dataSet);
-        }
-        return current;
     }
 
     private DataSet XOR(Collection<DataSet> dataSets) {

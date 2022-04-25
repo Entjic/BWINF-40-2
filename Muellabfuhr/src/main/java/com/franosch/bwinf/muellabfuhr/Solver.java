@@ -27,7 +27,6 @@ public class Solver {
         if (odds.size() != 0) {
             Graph completeGraph = completeGraph(odds);
             System.out.println("graph completed");
-            // TODO: 17.04.2022 do for all not only root
             Set<Edge> min = findMinPerfectMatching(completeGraph);
             System.out.println("min" + min);
             double weight = 0;
