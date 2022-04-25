@@ -141,10 +141,8 @@ public class Solver {
     }
 
     public List<Result> allocate(int k, List<Cycle> cycles) {
-        Map<Integer, Runner> runner = new HashMap<>();
-        for (int i = 0; i < k; i++) {
-            runner.put(i, new Runner(graph));
-        }
+        int counter = 0;
+        Map<Integer, Runner> runner = initRunner(k);
         List<Result> results = new ArrayList<>();
         cycles.sort((o1, o2) -> {
             double weight1 = o1.weight();
@@ -155,15 +153,15 @@ public class Solver {
         });
         List<Cycle> open = new ArrayList<>(cycles);
         allocateBiggest(runner.values(), open);
-
         Map<Integer, Runner> map = compute(runner, open);
         results.add(new Result(map.values()));
+        counter += 2;
+        if (k < counter) {
+            return results;
+        }
         Runner biggest = getBiggestRunner(map.values());
         if (biggest.getCycles().size() < 2) return results;
-        Map<Integer, Runner> moreRunner = new HashMap<>();
-        for (int i = 0; i < k; i++) {
-            moreRunner.put(i, new Runner(graph));
-        }
+        Map<Integer, Runner> moreRunner = initRunner(k);
         open = new ArrayList<>(cycles);
         Cycle biggestCycle = getBiggestCircle(biggest.getCycles());
         List<Cycle> next0 = new ArrayList<>(biggest.getCycles());
@@ -180,17 +178,19 @@ public class Solver {
         allocateBiggest(runners, open);
         Map<Integer, Runner> nextMap = compute(moreRunner, open);
         results.add(new Result(nextMap.values()));
-
         System.out.println(nextMap);
+
+        counter += 2;
+        if (k < counter) {
+            return results;
+        }
+
 
         // ---
 
 
         Runner biggest0 = getBiggestRunner(nextMap.values());
-        Map<Integer, Runner> moreRunner0 = new HashMap<>();
-        for (int i = 0; i < k; i++) {
-            moreRunner0.put(i, new Runner(graph));
-        }
+        Map<Integer, Runner> moreRunner0 = initRunner(k);
         open = new ArrayList<>(cycles);
         Cycle a0 = getBiggestCircle(biggest0.getCycles());
         List<Cycle> next = new ArrayList<>(biggest0.getCycles());
@@ -225,14 +225,11 @@ public class Solver {
 
         Runner biggestRunner = getBiggestRunner(nextMap0.values());
         if (nextMap.size() >= 5 && !nextMap.get(4).equals(biggestRunner)) {
-            Map<Integer, Runner> muchMoreRunners = new HashMap<>();
+            Map<Integer, Runner> muchMoreRunners = initRunner(k);
             Cycle hugeCycle = getBiggestCircle(biggestRunner.getCycles());
             List<Cycle> copy = new ArrayList<>(biggestRunner.getCycles());
             copy.remove(hugeCycle);
             Cycle second = getBiggestCircle(copy);
-            for (int j = 0; j < k; j++) {
-                muchMoreRunners.put(j, new Runner(graph));
-            }
             open = new ArrayList<>(cycles);
             open.remove(second);
             i = 0;
@@ -247,6 +244,14 @@ public class Solver {
             System.out.println(nextMap);
         }
         return results;
+    }
+
+    private Map<Integer, Runner> initRunner(int k) {
+        Map<Integer, Runner> map = new HashMap<>();
+        for (int i = 0; i < k; i++) {
+            map.put(i, new Runner(graph));
+        }
+        return map;
     }
 
     private Runner getBiggestRunner(Collection<Runner> runners) {
