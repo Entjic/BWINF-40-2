@@ -49,7 +49,7 @@ public class Solver {
         return list;
     }
 
-    public Set<DataSet> solve(Collection<DataSet> dataSets) {
+    public Set<DataSet> solve(List<DataSet> dataSets) {
         for (DataSet dataSet : dataSets) {
             System.out.println(dataSet);
         }
@@ -65,38 +65,217 @@ public class Solver {
         return result;
     }
 
-    public void solve(Collection<DataSet> all, boolean dummy){
+    public void solve(List<DataSet> all, boolean dummy) {
 
+        //AtomicInteger counter = new AtomicInteger();
         List<DataSet> sorted = sort(all, 0);
         List<DataSet> zero = getZeros(sorted, 0);
         List<DataSet> one = new ArrayList<>(sorted);
         one.removeAll(zero);
 
-        new Thread(() -> new Timer().scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                System.out.println(new Date());
+        final List<DataSet> sortedZeros = sort(zero, 1);
+        final List<DataSet> zeroZeros = getZeros(sortedZeros, 1);
+        final List<DataSet> zeroOnes = new ArrayList<>(sortedZeros);
+        zeroOnes.removeAll(zeroZeros);
+        int numThreads = 12;
+        int sizeZero = zero.size()/numThreads;
+        for(int i=numThreads; i>=1; i--) {
+            List<DataSet> part;
+            if(i== numThreads) {
+                part = new ArrayList<>(zero);
+            } else {
+                part = new ArrayList<>(zero.subList(sizeZero * i, zero.size()));
             }
-        }, 0, 1000 * 60 * 10)).start();
-        int i = Math.min(keys / 2, 4);
-        Collection<DataSet[]> subSetsOne = calcSubsets(one.toArray(DataSet[]::new), i);
-        Collection<DataSet[]> subSetsZero = calcSubsets(zero.toArray(DataSet[]::new), i);
-        Collection<DataSet[]> combined = new ArrayList<>(subSetsOne);
-        combined.addAll(subSetsZero);
-        final int max = (int) (binomial(zero.size(), 4) + binomial(one.size(), 4)) / 10;
-        final List<Integer> list = List.of(max, 2 * max, 3 * max, 4 * max, 5 * max, 6 * max, 7 * max, 8 * max, 9 * max, 10 * max);
-        System.out.println(list);
-        AtomicInteger counter = new AtomicInteger();
-        AtomicInteger progress = new AtomicInteger();
-        Collection<Collection<DataSet[]>> split = split(combined, 4);
-        for (Collection<DataSet[]> sets : split) {
-            System.out.println(sets.size());
+            final int j = i;
+            new Thread(() -> {
+                System.out.println("Thread alive 0 " + j);
+                List<DataSet> zeroZerosReduced = new ArrayList<>(zeroZeros);
+                List<DataSet>  unused = new ArrayList<>(zero);
+                unused.removeAll(part);
+                zeroZerosReduced.removeAll(unused);
+                List<DataSet> zeroOnesReduced = new ArrayList<>(zeroOnes);
+                zeroOnesReduced.removeAll(unused);
+
+                testZeros(all, part, zeroZerosReduced, zeroOnesReduced);
+            }).start();
         }
 
-        for (Collection<DataSet[]> sets : split) {
-            startThread(all, sets, counter, progress, list);
+        final List<DataSet> sortedOnes = sort(one, 1);
+        final List<DataSet> oneZeros = getZeros(sortedOnes, 1);
+        final List<DataSet> oneOnes = new ArrayList<>(sortedOnes);
+        oneOnes.removeAll(oneZeros);
+        int sizeOne = one.size()/numThreads;
+        for(int i=numThreads; i>=1; i--) {
+            List<DataSet> part;
+            if(i== numThreads) {
+                part = new ArrayList<>(one);
+            } else {
+                part = new ArrayList<>(one.subList(sizeOne * i, one.size()));
+            }
+            final int j = i;
+            new Thread(() -> {
+                System.out.println("Thread alive 1 " + j);
+                List<DataSet> oneZerosReduced = new ArrayList<>(oneZeros);
+                List<DataSet>  unused = new ArrayList<>(zero);
+                unused.removeAll(part);
+                oneZerosReduced.removeAll(unused);
+                List<DataSet> oneOnesReduced = new ArrayList<>(oneOnes);
+                oneOnesReduced.removeAll(unused);
+
+                testOnes(all, part, oneZerosReduced, oneOnesReduced);
+            }).start();
         }
 
+
+//        new Thread(() -> new Timer().scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                System.out.println(new Date());
+//            }
+//        }, 0, 1000 * 60 * 10)).start();
+//        int i = Math.min(keys / 2, 4);
+//        Collection<DataSet[]> subSetsOne = calcSubsets(one.toArray(DataSet[]::new), i);
+//        Collection<DataSet[]> subSetsZero = calcSubsets(zero.toArray(DataSet[]::new), i);
+//        Collection<DataSet[]> combined = new ArrayList<>(subSetsOne);
+//        combined.addAll(subSetsZero);
+//        final int max = (int) (binomial(zero.size(), 4) + binomial(one.size(), 4)) / 10;
+//        final List<Integer> list = List.of(max, 2 * max, 3 * max, 4 * max, 5 * max, 6 * max, 7 * max, 8 * max, 9 * max, 10 * max);
+//        System.out.println(list);
+//        AtomicInteger counter = new AtomicInteger();
+//        AtomicInteger progress = new AtomicInteger();
+//        Collection<Collection<DataSet[]>> split = split(combined, 4);
+//        for (Collection<DataSet[]> sets : split) {
+//            System.out.println(sets.size());
+//        }
+//
+//        for (Collection<DataSet[]> sets : split) {
+//            startThread(all, sets, counter, progress, list);
+//        }
+
+    }
+
+    private void testOnes(List<DataSet> all, List<DataSet> one, List<DataSet> oneZeros,
+                          List<DataSet> oneOnes) {
+        List<DataSet> alreadyDone;
+        List<DataSet> allCopy;
+        List<DataSet> oneCopy;
+        List<DataSet> third;
+        alreadyDone = new ArrayList<>();
+        List<DataSet> oneZeroCopy;
+        List<DataSet> oneOneCopy;
+
+        for (DataSet firstChosen : one) {
+            //System.out.println("datasets tested: " + counter.get());
+            alreadyDone.add(firstChosen);
+            oneCopy = new ArrayList(one);
+            oneCopy.removeAll(alreadyDone);
+
+            oneZeroCopy = new ArrayList<>(oneZeros);
+            oneZeroCopy.removeAll(alreadyDone);
+            oneOneCopy = new ArrayList<>(oneOnes);
+            oneOneCopy.removeAll(alreadyDone);
+
+            for (DataSet secondChosen : oneCopy) {
+                //  System.out.println("one zero");
+                oneZeroCopy.remove(secondChosen);
+                for (DataSet thirdChosen : oneZeroCopy) {
+                    third = new ArrayList<>(oneZeroCopy);
+                    third.remove(thirdChosen);
+
+                    for (DataSet fourthChosen : third) {
+                        allCopy = new ArrayList<DataSet>(all);
+                        allCopy.removeAll(alreadyDone);
+                        allCopy.remove(secondChosen);
+                        allCopy.remove(thirdChosen);
+                        allCopy.remove(fourthChosen);
+                        //      System.out.println(all.get(i).getId() + " " + all.get(j) .getId() + " " +
+                        //            oneZeroCopy.get(m).getId() + " " + oneZeroCopy.get(n).getId());
+                        //counter.incrementAndGet();
+                        solve3(allCopy, List.of(firstChosen, secondChosen, thirdChosen, fourthChosen));
+                    }
+                }
+                //System.out.println("one ones");
+                oneOneCopy.remove(secondChosen);
+                for (DataSet thirdChosen : oneOneCopy) {
+                    third = new ArrayList<>(oneOneCopy);
+                    third.remove(thirdChosen);
+                    for (DataSet fourthChosen : third) {
+                        allCopy = new ArrayList<DataSet>(all);
+                        allCopy.removeAll(alreadyDone);
+                        allCopy.remove(secondChosen);
+                        allCopy.remove(thirdChosen);
+                        allCopy.remove(fourthChosen);
+                        //    System.out.println(all.get(i).getId() + " " + all.get(j) .getId() + " " +
+                        //           oneOneCopy.get(m).getId() + " " + oneOneCopy.get(n).getId());
+                      //  counter.incrementAndGet();
+                        solve3(allCopy, List.of(firstChosen, secondChosen, thirdChosen, fourthChosen));
+                    }
+                }
+
+            }
+        }
+    }
+
+    private void testZeros(List<DataSet> all, List<DataSet> zero, List<DataSet> zeroZeros, List<DataSet> zeroOnes) {
+        List<DataSet> allCopy;
+        List<DataSet> zeroCopy;
+        List<DataSet> oneCopy;
+
+        List<DataSet> alreadyDone = new ArrayList<>();
+        List<DataSet> zeroZeroCopy;
+        List<DataSet> zeroOneCopy;
+
+        List<DataSet> third;
+        for (DataSet firstChosen : zero) {
+          //  System.out.println("datasets tested: " + counter.get());
+            alreadyDone.add(firstChosen);
+            zeroCopy = new ArrayList(zero);
+            zeroCopy.removeAll(alreadyDone);
+            zeroZeroCopy = new ArrayList<>(zeroZeros);
+            zeroZeroCopy.removeAll(alreadyDone);
+            zeroOneCopy = new ArrayList<>(zeroOnes);
+            zeroOneCopy.removeAll(alreadyDone);
+
+            for (DataSet secondChosen : zeroCopy) {
+                //System.out.println("zero zero");
+                zeroZeroCopy.remove(secondChosen);
+                for (DataSet thirdChosen : zeroZeroCopy) {
+                    third = new ArrayList<>(zeroZeroCopy);
+                    third.remove(thirdChosen);
+                    for (DataSet fourthChosen : third) {
+                        allCopy = new ArrayList<DataSet>(all);
+                        allCopy.removeAll(alreadyDone);
+                        allCopy.remove(secondChosen);
+                        allCopy.remove(thirdChosen);
+                        allCopy.remove(fourthChosen);
+                        //System.out.println(all.get(i).getId() + " " + all.get(j) .getId() + " " +
+                        //      zeroZeroCopy.get(m).getId() + " " + zeroZeroCopy.get(n).getId());
+                      // counter.incrementAndGet();
+                        solve3(allCopy, List.of(firstChosen, secondChosen, thirdChosen, fourthChosen));
+                    }
+                }
+                //System.out.println("zero ones");
+                zeroOneCopy.remove(secondChosen);
+                for (DataSet thirdChosen : zeroOneCopy) {
+                    third = new ArrayList<>(zeroOneCopy);
+                    third.remove(thirdChosen);
+                    for (DataSet fourthChosen : third) {
+                        allCopy = new ArrayList<DataSet>(all);
+                        allCopy.removeAll(alreadyDone);
+                        allCopy.remove(secondChosen);
+                        allCopy.remove(thirdChosen);
+                        allCopy.remove(fourthChosen);
+                        //  System.out.println(all.get(i).getId() + " " + all.get(j) .getId() + " " +
+                        //        zeroOneCopy.get(m).getId() + " " + zeroOneCopy.get(n).getId());
+                     //   counter.incrementAndGet();
+                        solve3(allCopy, List.of(firstChosen, secondChosen, thirdChosen, fourthChosen));
+                    }
+                }
+
+            }
+
+
+        }
     }
 
     private void startThread(Collection<DataSet> all, Collection<DataSet[]> sets,

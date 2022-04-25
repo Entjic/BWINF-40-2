@@ -17,7 +17,7 @@ public class Main {
         String path;
         String name;
         int part;
-        boolean test = true;
+        boolean test = false;
         if (!test) {
             for (String arg : args) {
                 System.out.println(arg);
@@ -28,11 +28,12 @@ public class Main {
             System.out.println(pre);
             path = pre + "rsc/";
         } else {
-            name = "stapel5";
+            name = "stapel2";
             path = TEST_RESOURCES;
             part = 0;
         }
-        run(name, path, part);
+       run(name, path, part);
+       // random();
     }
 
     private static void run(String name, String path, int part) {
@@ -54,7 +55,7 @@ public class Main {
     }
 
     private static void random() {
-        int cards = 40;
+        int cards = 60;
         int keys = 10;
         DataSet[] random = new DataSet[cards];
         for (int i = 0; i < random.length; i++) {
